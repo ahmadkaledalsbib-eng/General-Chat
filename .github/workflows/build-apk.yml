@@ -1,0 +1,26 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Android APK
+        run: |
+          npx expo build:android -t apk || true
