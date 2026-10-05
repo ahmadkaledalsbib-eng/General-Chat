@@ -1,570 +1,110 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>General Chat - تطبيق المراسلة</title>
-    <style>
-        :root {
-            --bg-app: #0b141a;
-            --bg-header: #111b21;
-            --bg-card: #111b21;
-            --bg-search: #202c33;
-            --bg-hover: #202c33;
-            --accent-green: #00a884;
-            --accent-green-active: #025144;
-            --text-primary: #e9edef;
-            --text-secondary: #8696a0;
-            --border-color: #222d34;
-            --blue-tick: #53bdeb;
-            --font-ui: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: var(--font-ui);
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            background-color: var(--bg-app);
-            color: var(--text-primary);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            overflow: hidden;
-        }
-
-        /* Container simulating mobile / desktop responsive view */
-        .mobile-frame {
-            width: 100%;
-            max-width: 480px;
-            height: 100vh;
-            background-color: var(--bg-app);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        }
-
-        /* Top Bar */
-        .top-bar {
-            background-color: var(--bg-header);
-            padding: 12px 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .brand-title {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .top-icons {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .icon-btn {
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-        }
-
-        .icon-btn:hover {
-            background: var(--bg-hover);
-            color: var(--text-primary);
-        }
-
-        .avatar-top {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: #202c33;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            color: #fff;
-            border: 1px solid var(--accent-green);
-        }
-
-        /* Search Section */
-        .search-container {
-            padding: 8px 16px;
-            background-color: var(--bg-app);
-        }
-
-        .search-box {
-            background-color: var(--bg-search);
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            padding: 8px 16px;
-            gap: 12px;
-        }
-
-        .search-box input {
-            background: none;
-            border: none;
-            outline: none;
-            color: var(--text-primary);
-            width: 100%;
-            font-size: 0.95rem;
-        }
-
-        .search-box input::placeholder {
-            color: var(--text-secondary);
-        }
-
-        /* Filter Chips */
-        .filters-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px 12px 16px;
-            overflow-x: auto;
-            scrollbar-width: none;
-        }
-
-        .filters-container::-webkit-scrollbar {
-            display: none;
-        }
-
-        .chip {
-            padding: 6px 16px;
-            border-radius: 18px;
-            background-color: var(--bg-search);
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            font-weight: 500;
-            border: none;
-            cursor: pointer;
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .chip.active {
-            background-color: var(--accent-green-active);
-            color: var(--accent-green);
-            font-weight: 600;
-        }
-
-        .chip-add {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-        }
-
-        /* Chat List */
-        .chat-list {
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .chat-item {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 12px 16px;
-            cursor: pointer;
-            transition: background 0.15s;
-            position: relative;
-        }
-
-        .chat-item:hover {
-            background-color: var(--bg-hover);
-        }
-
-        .avatar-container {
-            position: relative;
-            width: 50px;
-            height: 50px;
-            flex-shrink: 0;
-        }
-
-        .chat-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background-color: #374248;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 1.2rem;
-            color: #fff;
-            overflow: hidden;
-        }
-
-        .verified-badge {
-            position: absolute;
-            bottom: -2px;
-            left: -2px;
-            background-color: var(--accent-green);
-            color: #000;
-            border-radius: 50%;
-            width: 16px;
-            height: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            font-weight: bold;
-            border: 2px solid var(--bg-app);
-        }
-
-        .chat-details {
-            flex: 1;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .chat-top-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .chat-name {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .chat-time {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-        }
-
-        .chat-bottom-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 6px;
-        }
-
-        .chat-message-preview {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .double-tick {
-            color: var(--blue-tick);
-            font-weight: bold;
-            font-size: 0.85rem;
-        }
-
-        .reaction-icon {
-            font-size: 0.85rem;
-        }
-
-        /* Floating Action Button (FAB) */
-        .fab {
-            position: absolute;
-            bottom: 75px;
-            left: 20px;
-            width: 52px;
-            height: 52px;
-            background-color: var(--accent-green);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #0b141a;
-            font-size: 1.8rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-            cursor: pointer;
-            border: none;
-            z-index: 10;
-        }
-
-        /* Bottom Navigation Bar */
-        .bottom-nav {
-            background-color: var(--bg-header);
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-around;
-            padding: 8px 0;
-            z-index: 5;
-        }
-
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            color: var(--text-secondary);
-            font-size: 0.75rem;
-            text-decoration: none;
-            cursor: pointer;
-            width: 20%;
-        }
-
-        .nav-item.active {
-            color: var(--text-primary);
-        }
-
-        .nav-icon-wrapper {
-            padding: 4px 16px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .nav-item.active .nav-icon-wrapper {
-            background-color: var(--accent-green-active);
-            color: var(--accent-green);
-        }
-
-        .nav-icon {
-            width: 22px;
-            height: 22px;
-            fill: currentColor;
-        }
-
-        /* Top Admin Switch Banner */
-        .admin-link-banner {
-            background: #1e293b;
-            color: #38bdf8;
-            padding: 6px 12px;
-            font-size: 0.8rem;
-            text-align: center;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #334155;
-        }
-
-        .admin-link-btn {
-            background: #0284c7;
-            color: white;
-            border: none;
-            padding: 4px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.75rem;
-            font-weight: bold;
-            text-decoration: none;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>دردشة ابن الجبل</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <!-- مكتبة PeerJS للمكالمات الصوتية والمرئية عبر WebRTC -->
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
 <body>
+  <div class="app-container">
+    <!-- الشريط العلوي -->
+    <header class="top-bar">
+      <div class="app-title">
+        <img src="icon.svg" class="app-icon" alt="Logo">
+        <h1>دردشة ابن الجبل</h1>
+      </div>
+      <div class="header-actions">
+        <button id="searchBtn">🔍</button>
+        <button id="settingsBtn">⚙️</button>
+      </div>
+    </header>
 
-    <div class="mobile-frame">
-        <!-- Banner link to separate admin panel -->
-        <div class="admin-link-banner">
-            <span>لوحة التحكم المنفصلة للأدمين متوفرة</span>
-            <a href="admin.html" class="admin-link-btn" target="_blank">الانتقال للوحة الإدارة ⚙️</a>
-        </div>
-
-        <!-- Top Header Bar -->
-        <div class="top-bar">
-            <div class="brand-title" id="appTitle">واتساب</div>
-            <div class="top-icons">
-                <button class="icon-btn" title="خيارات">⋮</button>
-                <div class="avatar-top">👤</div>
-                <button class="icon-btn" title="الكاميرا">📷</button>
-                <button class="icon-btn" title="وضع الإخفاء">👻</button>
-                <button class="icon-btn" title="الوضع الداكن">☀️</button>
-                <button class="icon-btn" title="وضع الطيران">✈️</button>
-            </div>
-        </div>
-
-        <!-- Search Bar -->
-        <div class="search-container">
-            <div class="search-box">
-                <span style="color:var(--text-secondary);">🔍</span>
-                <input type="text" placeholder="بحث...">
-            </div>
-        </div>
-
-        <!-- Filter Chips -->
-        <div class="filters-container">
-            <button class="chip active">الكل</button>
-            <button class="chip">المفضلة</button>
-            <button class="chip">المجموعات</button>
-            <button class="chip chip-add">+</button>
-        </div>
-
-        <!-- Chat List Items (Matching image 120457) -->
-        <div class="chat-list" id="chatList">
-            <!-- Chat 1 -->
-            <div class="chat-item">
-                <div class="avatar-container">
-                    <div class="chat-avatar" style="background:#4a5568;">👤</div>
-                    <div class="verified-badge">✓</div>
-                </div>
-                <div class="chat-details">
-                    <div class="chat-top-row">
-                        <span class="chat-name">ابو الجود ابو عبدو الخان</span>
-                        <span class="chat-time">امس</span>
-                    </div>
-                    <div class="chat-bottom-row">
-                        <span class="chat-message-preview">
-                            <span class="double-tick">✓✓</span> 😂
-                        </span>
-                        <span class="reaction-icon">🔘</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Chat 2 -->
-            <div class="chat-item">
-                <div class="avatar-container">
-                    <div class="chat-avatar" style="background:#15803d;">🦅</div>
-                </div>
-                <div class="chat-details">
-                    <div class="chat-top-row">
-                        <span class="chat-name">أحمد العلي موارد الفوج الرابع</span>
-                        <span class="chat-time">2026/10/4</span>
-                    </div>
-                    <div class="chat-bottom-row">
-                        <span class="chat-message-preview">
-                            <span class="double-tick">✓✓</span> ربي يحفظك وان شاء الله بترجع ومراتب أعلى يا...
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Chat 3 -->
-            <div class="chat-item">
-                <div class="avatar-container">
-                    <div class="chat-avatar" style="background:#b91c1c;">🚗</div>
-                </div>
-                <div class="chat-details">
-                    <div class="chat-top-row">
-                        <span class="chat-name">حمزة العمر ابو خديجة</span>
-                        <span class="chat-time">2026/10/4</span>
-                    </div>
-                    <div class="chat-bottom-row">
-                        <span class="chat-message-preview">😍</span>
-                        <span class="reaction-icon">🔘</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Chat 4 -->
-            <div class="chat-item">
-                <div class="avatar-container">
-                    <div class="chat-avatar" style="background:#0284c7;">👓</div>
-                </div>
-                <div class="chat-details">
-                    <div class="chat-top-row">
-                        <span class="chat-name">أبو يعقوب</span>
-                        <span class="chat-time">2026/10/3</span>
-                    </div>
-                    <div class="chat-bottom-row">
-                        <span class="chat-message-preview">
-                            <span class="double-tick">✓✓</span> رابط الحجز للدكتور الداخلية : محمد الإسماعيل خ...
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Chat 5 -->
-            <div class="chat-item">
-                <div class="avatar-container">
-                    <div class="chat-avatar" style="background:#d97706;">📸</div>
-                </div>
-                <div class="chat-details">
-                    <div class="chat-top-row">
-                        <span class="chat-name">احمد محمد سعيد حرزوم</span>
-                        <span class="chat-time">2026/9/13</span>
-                    </div>
-                    <div class="chat-bottom-row">
-                        <span class="chat-message-preview">معك</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Chat 6 -->
-            <div class="chat-item">
-                <div class="avatar-container">
-                    <div class="chat-avatar" style="background:#059669;">🌿</div>
-                </div>
-                <div class="chat-details">
-                    <div class="chat-top-row">
-                        <span class="chat-name">محمد ياسر الجرك</span>
-                        <span class="chat-time">2026/9/13</span>
-                    </div>
-                    <div class="chat-bottom-row">
-                        <span class="chat-message-preview">..</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Floating Action Button -->
-        <button class="fab" title="محادثة جديدة">+</button>
-
-        <!-- Bottom Navigation Bar (RTL matching image 120457) -->
-        <div class="bottom-nav">
-            <div class="nav-item active">
-                <div class="nav-icon-wrapper">
-                    <svg class="nav-icon" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
-                </div>
-                <span>الدردشات</span>
-            </div>
-            <div class="nav-item">
-                <div class="nav-icon-wrapper">
-                    <svg class="nav-icon" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-                </div>
-                <span>المجموعات</span>
-            </div>
-            <div class="nav-item">
-                <div class="nav-icon-wrapper">
-                    <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-                </div>
-                <span>التحديثات</span>
-            </div>
-            <div class="nav-item">
-                <div class="nav-icon-wrapper">
-                    <svg class="nav-icon" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-                </div>
-                <span>المكالمات</span>
-            </div>
-            <div class="nav-item">
-                <div class="nav-icon-wrapper">
-                    <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 2A10 10 0 0 0 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8.009 8.009 0 0 1-8 8z"/></svg>
-                </div>
-                <span>المجتمعات</span>
-            </div>
-        </div>
+    <!-- شريط البحث والتصفية -->
+    <div class="search-section">
+      <input type="text" id="searchInput" placeholder="بحث...">
+      <div class="filter-chips">
+        <button class="chip active" data-tab="all">الكل</button>
+        <button class="chip" data-tab="direct">الدردشات</button>
+        <button class="chip" data-tab="groups">المجموعات</button>
+        <button class="chip" data-tab="status">الحالة</button>
+      </div>
     </div>
 
+    <!-- قائمة المحادثات الرئيسية -->
+    <main class="chat-list" id="chatList">
+      <!-- نموذج دردشة فردية -->
+      <div class="chat-item" onclick="openChat('أحمد العلي', 'مباشر')">
+        <div class="avatar">👤</div>
+        <div class="chat-info">
+          <div class="chat-header">
+            <span class="name">أحمد العلي</span>
+            <span class="time">10:42 ص</span>
+          </div>
+          <p class="last-msg">حياك الله يا غالي، كيف الوضع عندك؟</p>
+        </div>
+      </div>
+
+      <!-- نموذج مجموعة -->
+      <div class="chat-item group" onclick="openChat('مجموعة أحرار الجبل', 'مجموعة')">
+        <div class="avatar group-avatar">👥</div>
+        <div class="chat-info">
+          <div class="chat-header">
+            <span class="name">مجموعة أحرار الجبل</span>
+            <span class="time">أمس</span>
+          </div>
+          <p class="last-msg">أبو يعقوب: أرسل المقطع الصوتي هنا...</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- شاشة نافذة المحادثة النشطة (مخفية افتراضياً) -->
+    <section class="chat-screen" id="chatScreen">
+      <header class="chat-room-header">
+        <button onclick="closeChat()">➡️</button>
+        <h3 id="activeChatName">الاسم</h3>
+        <div class="call-buttons">
+          <button onclick="startCall('audio')">📞</button>
+          <button onclick="startCall('video')">📹</button>
+        </div>
+      </header>
+
+      <div class="messages-container" id="messagesContainer"></div>
+
+      <!-- منطقة إدخال الرسائل والصوت -->
+      <footer class="chat-input-bar">
+        <input type="text" id="messageInput" placeholder="اكتب رسالة...">
+        <button id="voiceRecordBtn">🎙️</button>
+        <button id="sendBtn" onclick="sendMessage()">أرسل</button>
+      </footer>
+    </section>
+
+    <!-- واجهة المكالمة الصادقة/الواردة (WebRTC) -->
+    <div class="call-overlay" id="callOverlay">
+      <div class="video-grid">
+        <video id="localVideo" autoplay muted></video>
+        <video id="remoteVideo" autoplay></video>
+      </div>
+      <div class="call-controls">
+        <button id="endCallBtn" onclick="endCall()" class="btn-danger">إغلاق المكالمة</button>
+      </div>
+    </div>
+
+    <!-- زر الإضافة العائم -->
+    <button class="fab">+</button>
+
+    <!-- شريط التنقل السفلي -->
+    <nav class="bottom-nav">
+      <button class="nav-item active">💬<br>الدردشات</button>
+      <button class="nav-item">👥<br>المجموعات</button>
+      <button class="nav-item">⭕<br>الحالة</button>
+      <button class="nav-item">📞<br>المكالمات</button>
+      <button class="nav-item">👤<br>جهات الاتصال</button>
+    </nav>
+  </div>
+  <script src="app.js"></script>
 </body>
 </html>
