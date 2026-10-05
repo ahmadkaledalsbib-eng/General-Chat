@@ -27,8 +27,8 @@ jobs:
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Prebuild Expo Native Files
-        run: npx expo prebuild --platform android
+      - name: Clean and Prebuild Expo Native Files
+        run: npx expo prebuild --platform android --clean
 
       - name: Build Android Release APK
         run: |
