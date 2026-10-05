@@ -11,16 +11,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-cache: 'npm'
+          node-version: 18
+          cache: 'npm'
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
       - name: Install Dependencies
         run: npm install
 
-      - name: Build Android APK
+      - name: Prebuild Expo Native Files
+        run: npx expo prebuild --platform android
+
+      - name: Build Android Release APK
         run: |
-          npx expo build:android -t apk || true
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WhatsApp-Clone-APK
+          path: android/app/build/outputs/apk/release/*.apk
