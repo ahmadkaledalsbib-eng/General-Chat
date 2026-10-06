@@ -1,0 +1,47 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>لوحة الإدارة</title>
+<style>
+:root{--bg:#f6f7f9;--fg:#1b1f24;--ac:#0b6e4f;--bd:#d9dde2}
+@media(prefers-color-scheme:dark){:root{--bg:#14171a;--fg:#e8eaed;--bd:#2c3238}}
+body{font-family:system-ui,"Segoe UI",Tahoma,sans-serif;background:var(--bg);color:var(--fg);margin:0;padding:16px}
+input,button{font:inherit;padding:8px;border:1px solid var(--bd);border-radius:6px;background:transparent;color:inherit}
+button{background:var(--ac);color:#fff;border:0;cursor:pointer}
+.w{overflow-x:auto}table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid var(--bd);padding:8px;text-align:right}
+nav button{margin-inline-end:6px}section{display:none}section.on{display:block}
+</style></head><body>
+<div id="login"><h2>دخول الإدارة</h2><input id="em" placeholder="البريد"> <input id="pw" type="password" placeholder="كلمة المرور"> <button onclick="login()">دخول</button></div>
+<div id="app" hidden>
+<nav><button onclick="tab('users')">المستخدمون</button><button onclick="tab('cur')">العملات</button><button onclick="tab('tr')">التحويلات</button></nav>
+<section id="users" class="on"><div class="w"><table id="ut"></table></div></section>
+<section id="cur"><div id="rates"></div><button onclick="saveRates()">حفظ الأسعار</button></section>
+<section id="tr"><div class="w"><table id="tt"></table></div></section>
+</div>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-functions-compat.js"></script>
+<script>
+firebase.initializeApp({/* ضع إعدادات مشروعك هنا */});
+const auth=firebase.auth(),db=firebase.firestore(),fn=n=>firebase.functions().httpsCallable(n);
+const $=id=>document.getElementById(id);
+const tab=t=>document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id==t));
+async function login(){try{const r=await auth.signInWithEmailAndPassword($('em').value,$('pw').value);
+ const tk=await r.user.getIdTokenResult(true);if(!tk.claims.admin){await auth.signOut();return alert('ليس لديك صلاحية الإدارة')}}catch(e){alert('فشل الدخول')}}
+auth.onAuthStateChanged(u=>{if(!u)return;$('login').hidden=true;$('app').hidden=false;load()});
+const call=async(n,d)=>{try{await fn(n)(d)}catch(e){alert(e.message)}};
+function load(){
+ db.collection('users').onSnapshot(s=>{$('ut').innerHTML='<tr><th>الاسم</th><th>الحساب</th><th>الأرصدة</th><th>توثيق</th><th>إجراءات</th></tr>'+
+  s.docs.map(d=>{const u=d.data(),b=u.balances||{};return `<tr><td>${u.name}${u.verified?' ✔':''}</td><td>${u.accountNumber}</td>
+  <td>${['USD','SYP','TRY','EUR'].map(c=>`${c}: <a href="#" onclick="setBal('${d.id}','${c}',${b[c]||0});return false">${b[c]||0}</a>`).join('<br>')}</td>
+  <td>${u.verifyRequest?.status||'-'} ${u.verifyRequest?.status=='pending'?`<button onclick="call('adminReviewVerify',{uid:'${d.id}',approve:true})">قبول</button> <button onclick="call('adminReviewVerify',{uid:'${d.id}',approve:false})">رفض</button>`:''}</td>
+  <td><button onclick="call('adminSetDisabled',{uid:'${d.id}',disabled:${!u.disabled}})">${u.disabled?'تفعيل':'تعطيل'}</button>
+  <button onclick="if(confirm('حذف نهائي؟'))call('adminDeleteUser',{uid:'${d.id}'})">حذف</button></td></tr>`}).join('')});
+ db.doc('config/rates').onSnapshot(s=>{const r=s.data()||{USD:1,SYP:1,TRY:1,EUR:1};
+  $('rates').innerHTML=Object.keys(r).map(k=>`<p>${k} لكل 1 دولار <input data-c="${k}" type="number" step="any" value="${r[k]}"></p>`).join('')});
+ db.collection('transfers').orderBy('createdAt','desc').limit(100).onSnapshot(s=>{$('tt').innerHTML='<tr><th>من</th><th>إلى</th><th>المبلغ</th><th>الحالة</th><th></th></tr>'+
+  s.docs.map(d=>{const t=d.data();return `<tr><td>${t.fromName}</td><td>${t.toName}</td><td>${t.amount} ${t.currency}</td><td>${t.status}</td>
+  <td>${t.status=='done'?`<button onclick="call('adminCancelTransfer',{id:'${d.id}'})">إلغاء</button>`:''}</td></tr>`}).join('')});
+}
+function setBal(uid,c,v){const n=prompt('الرصيد الجديد ('+c+')',v);if(n!==null)call('adminSetBalance',{uid,currency:c,value:n})}
+function saveRates(){const o={};document.querySelectorAll('#rates input').forEach(i=>o[i.dataset.c]=Number(i.value));db.doc('config/rates').set(o)}
+</script></body></html>
