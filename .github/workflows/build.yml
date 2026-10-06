@@ -1,5 +1,9 @@
 name: Build APK
 on: [push, workflow_dispatch]
+
+permissions:
+  contents: write
+
 jobs:
   apk:
     runs-on: ubuntu-latest
@@ -18,4 +22,10 @@ jobs:
       #- run: dart run flutter_launcher_icons
       - run: flutter build apk --release --dart-define=API=${{ vars.API_URL }}
       - uses: actions/upload-artifact@v4
-        with: { name: bank-syria-apk, path: app/build/app/outputs/flutter-apk/app-release.apk }
+        with:
+          name: bank-syria-apk
+          path: app/build/app/outputs/flutter-apk/app-release.apk
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          files: app/build/app/outputs/flutter-apk/app-release.apk
