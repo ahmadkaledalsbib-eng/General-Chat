@@ -1,18 +1,24 @@
 name: bank_syria
-description: Bank Syria
+description: Bank Syria Mobile Application
 version: 1.0.0+1
 environment:
   sdk: '>=3.0.0 <4.0.0'
+
 dependencies:
   flutter:
     sdk: flutter
   http: ^1.2.0
   shared_preferences: ^2.2.2
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^5.1.1
+
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1
+
 flutter_launcher_icons:
   android: true
   ios: false
   image_path: assets/icon.png
+
 flutter:
   uses-material-design: true
