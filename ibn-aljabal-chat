@@ -1,6 +1,0 @@
-ibn-aljabal-chat/
-├── index.html       # الواجهة الرئيسية والهيكل
-├── style.css        # التنسيقات والواجهة المظلمة
-├── app.js           # منطق الدردشة والرسائل الصوتية والمكالمات (WebRTC)
-├── manifest.json    # تحويل التطبيق إلى Progressive Web App (PWA)
-└── icon.svg         # أيقونة التطبيق
