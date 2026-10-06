@@ -625,9 +625,7 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
   @override void initState() { super.initState(); load(); }
   Future<void> load() async {
     final r = await call('/api/support');
-    setState(() { msgs = r is List ? r : []; });
-  }
-
+    setState(() { msgs = r is List ? List<dynamic>.from(r) : []; });
   @override
   Widget build(BuildContext context) {
     return Scaffold(
