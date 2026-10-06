@@ -1,0 +1,17 @@
+<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>لوحة إدارة بنك سوريا</title>
+<style>body{font-family:sans-serif;background:#0b1240;color:#fff;margin:0;padding:16px}input,button{padding:10px;border-radius:8px;border:0;margin:4px}
+button{background:#5b8cff;color:#fff;cursor:pointer}.c{background:#1a2366;border-radius:12px;padding:12px;margin:8px 0}input{width:140px}</style>
+<div id=app></div>
+<script>
+let T=localStorage.t,$=document.getElementById('app');
+const api=(p,b)=>fetch(p,{method:b?'POST':'GET',headers:{'Content-Type':'application/json',Authorization:'Bearer '+T},body:b?JSON.stringify(b):undefined}).then(r=>r.json());
+function login(){$.innerHTML=`<h2>لوحة الإدارة</h2><input id=e placeholder="الإيميل"><br><input id=p type=password placeholder="كلمة المرور"><br><button onclick=go()>دخول</button><p id=m></p>`}
+async function go(){const r=await api('/api/admin/login',{email:e.value,password:p.value});if(r.token){T=r.token;localStorage.t=T;list()}else m.textContent=r.error}
+async function list(){const u=await api('/api/admin/users');if(!Array.isArray(u)){return login()}
+$.innerHTML=`<h2>المستخدمون (${u.length})</h2><button onclick="localStorage.clear();login()">خروج</button>`+u.map(x=>`<div class=c><b>${x.fullName}</b> @${x.username}<br>${x.email} | ${x.phone} | ${x.region}<br>حساب: ${x.account}<br>
+الرصيد: <input id=b${x.id} type=number value=${x.balance}><button onclick="upd('${x.id}',{balance:+document.getElementById('b${x.id}').value})">حفظ</button>
+<button onclick="upd('${x.id}',{disabled:${!x.disabled}})">${x.disabled?'تفعيل':'تعطيل'}</button></div>`).join('')}
+async function upd(id,b){await api('/api/admin/users/'+id,b);list()}
+T?list():login();
+</script></html>
