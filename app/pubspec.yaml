@@ -19,6 +19,7 @@ dependencies:
   cloud_firestore: ^5.0.1
   firebase_messaging: ^15.0.1
   firebase_storage: ^12.0.1
+  cloud_functions: ^5.0.1          # لربط واستدعاء Cloud Functions مباشرة من التطبيق
 
   # QR Code & Camera
   qr_flutter: ^4.1.0
@@ -29,7 +30,7 @@ dependencies:
   audioplayers: ^6.0.0
 
   # Auto Update & System
-  ota_update: ^6.0.0
+  ota_update: ^7.0.0               # تم التحديث إلى 7.0.0 لحل مشكلة jcenter و Gradle 8 في GitHub Actions
   permission_handler: ^11.3.1
   package_info_plus: ^8.0.0
   provider: ^6.1.2
@@ -39,6 +40,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.13.1  # تم إضافتها لحل خطأ "Could not find package flutter_launcher_icons"
 
 flutter:
   uses-material-design: true
@@ -47,3 +49,9 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+
+# إعدادات أداة أيقونة التطبيق (Flutter Launcher Icons)
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/logo.png"
