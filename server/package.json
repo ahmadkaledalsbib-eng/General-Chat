@@ -1,2 +1,0 @@
-{"name":"bank-syria-server","version":"1.0.0","main":"index.js","scripts":{"start":"node index.js"},
-"dependencies":{"express":"^4.19.2","bcryptjs":"^2.4.3","jsonwebtoken":"^9.0.2","cors":"^2.8.5"}}
