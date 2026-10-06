@@ -4,19 +4,31 @@ import 'screens/send_screen.dart';
 import 'screens/receive_screen.dart';
 import 'services/push_service.dart';
 
+const fbOptions = FirebaseOptions(
+  apiKey: 'ضع_apiKey',
+  appId: 'ضع_appId',
+  messagingSenderId: 'ضع_messagingSenderId',
+  projectId: 'ضع_projectId',
+);
+
 @pragma('vm:entry-point')
 Future<void> bgHandler(msg) async {
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(options: fbOptions);
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  await PushService.init(bgHandler);
+  String? error;
+  try {
+    await Firebase.initializeApp(options: fbOptions);
+    await PushService.init(bgHandler);
+  } catch (e) {
+    error = e.toString();
+  }
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
     builder: (c, w) => Directionality(textDirection: TextDirection.rtl, child: w!),
-    home: const Home(),
+    home: error == null ? const Home() : Scaffold(body: Center(child: Padding(padding: const EdgeInsets.all(24), child: Text('خطأ: $error')))),
   ));
 }
 
