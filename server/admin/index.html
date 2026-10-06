@@ -1,17 +1,237 @@
-<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>لوحة إدارة بنك سوريا</title>
-<style>body{font-family:sans-serif;background:#0b1240;color:#fff;margin:0;padding:16px}input,button{padding:10px;border-radius:8px;border:0;margin:4px}
-button{background:#5b8cff;color:#fff;cursor:pointer}.c{background:#1a2366;border-radius:12px;padding:12px;margin:8px 0}input{width:140px}</style>
-<div id=app></div>
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>لوحة إدارة المحفظة الإلكترونية</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0b1240; color: #fff; margin: 0; padding: 16px; }
+    h2, h3 { color: #5b8cff; margin-top: 0; }
+    input, button, select, textarea { padding: 10px; border-radius: 8px; border: 1px solid #2a357d; margin: 4px; background: #12194d; color: #fff; }
+    button { background: #5b8cff; border: 0; cursor: pointer; font-weight: bold; }
+    button:hover { opacity: 0.9; }
+    .btn-danger { background: #e63946; }
+    .btn-success { background: #2a9d8f; }
+    .c { background: #1a2366; border-radius: 12px; padding: 16px; margin: 12px 0; border: 1px solid #2a357d; }
+    .nav { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .nav button { flex: 1; padding: 12px; background: #1a2366; }
+    .nav button.active { background: #5b8cff; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+    .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+    .badge-v { background: #2a9d8f; }
+    .badge-d { background: #e63946; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
 <script>
-let T=localStorage.t,$=document.getElementById('app');
-const api=(p,b)=>fetch(p,{method:b?'POST':'GET',headers:{'Content-Type':'application/json',Authorization:'Bearer '+T},body:b?JSON.stringify(b):undefined}).then(r=>r.json());
-function login(){$.innerHTML=`<h2>لوحة الإدارة</h2><input id=e placeholder="الإيميل"><br><input id=p type=password placeholder="كلمة المرور"><br><button onclick=go()>دخول</button><p id=m></p>`}
-async function go(){const r=await api('/api/admin/login',{email:e.value,password:p.value});if(r.token){T=r.token;localStorage.t=T;list()}else m.textContent=r.error}
-async function list(){const u=await api('/api/admin/users');if(!Array.isArray(u)){return login()}
-$.innerHTML=`<h2>المستخدمون (${u.length})</h2><button onclick="localStorage.clear();login()">خروج</button>`+u.map(x=>`<div class=c><b>${x.fullName}</b> @${x.username}<br>${x.email} | ${x.phone} | ${x.region}<br>حساب: ${x.account}<br>
-الرصيد: <input id=b${x.id} type=number value=${x.balance}><button onclick="upd('${x.id}',{balance:+document.getElementById('b${x.id}').value})">حفظ</button>
-<button onclick="upd('${x.id}',{disabled:${!x.disabled}})">${x.disabled?'تفعيل':'تعطيل'}</button></div>`).join('')}
-async function upd(id,b){await api('/api/admin/users/'+id,b);list()}
-T?list():login();
-</script></html>
+let T = localStorage.t, $ = document.getElementById('app'), currentTab = 'users';
+
+const api = (p, b, method) => fetch(p, {
+  method: method || (b ? 'POST' : 'GET'),
+  headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + T },
+  body: b ? JSON.stringify(b) : undefined
+}).then(r => r.json());
+
+function login() {
+  $.innerHTML = `
+    <div style="max-width:360px;margin:60px auto;" class="c">
+      <h2>دخول لوحة الإدارة</h2>
+      <input id="e" placeholder="البريد الإلكتروني" style="width:90%"><br>
+      <input id="p" type="password" placeholder="كلمة المرور" style="width:90%"><br>
+      <button onclick="go()" style="width:95%">تسجيل الدخول</button>
+      <p id="m" style="color:#ff6b6b"></p>
+    </div>`;
+}
+
+async function go() {
+  const r = await api('/api/admin/login', { email: e.value, password: p.value });
+  if (r.token) { T = r.token; localStorage.t = T; mainLayout(); }
+  else m.textContent = r.error;
+}
+
+function mainLayout() {
+  $.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h2>لوحة إدارة بنك سوريا</h2>
+      <button onclick="localStorage.clear();login()" class="btn-danger">تسجيل خروج</button>
+    </div>
+    <div class="nav">
+      <button id="t-users" onclick="switchTab('users')">المستخدمين</button>
+      <button id="t-rates" onclick="switchTab('rates')">العملات والصرف</button>
+      <button id="t-verif" onclick="switchTab('verif')">طلبات التوثيق</button>
+      <button id="t-tx" onclick="switchTab('tx')">إدارة التحويلات</button>
+      <button id="t-support" onclick="switchTab('support')">الدعم الفني</button>
+      <button id="t-theme" onclick="switchTab('theme')">التخصيص البصري</button>
+    </div>
+    <div id="content"></div>`;
+  switchTab(currentTab);
+}
+
+async function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  if(document.getElementById('t-' + tab)) document.getElementById('t-' + tab).classList.add('active');
+  
+  const cnt = document.getElementById('content');
+  if (tab === 'users') renderUsers(cnt);
+  if (tab === 'rates') renderRates(cnt);
+  if (tab === 'verif') renderVerifications(cnt);
+  if (tab === 'tx') renderTx(cnt);
+  if (tab === 'support') renderSupport(cnt);
+  if (tab === 'theme') renderTheme(cnt);
+}
+
+// 1. إدارة المستخدمين
+async function renderUsers(cnt) {
+  const u = await api('/api/admin/users');
+  cnt.innerHTML = `<h3>المستخدمين المسجلين (${u.length})</h3><div class="grid">` + u.map(x => `
+    <div class="c">
+      <b>${x.fullName}</b> ${x.isVerified ? '<span class="badge badge-v">✔ موثق</span>':''}<br>
+      <small>@${x.username} | ${x.phone} | ${x.email}</small><br>
+      <small>رقم الحساب: ${x.account}</small><hr style="border-color:#2a357d">
+      <b>الأرصدة:</b><br>
+      USD: <input id="u_${x.id}" type="number" value="${x.balances.USD}" style="width:80px">
+      SYP: <input id="s_${x.id}" type="number" value="${x.balances.SYP}" style="width:80px"><br>
+      TRY: <input id="t_${x.id}" type="number" value="${x.balances.TRY}" style="width:80px">
+      EUR: <input id="e_${x.id}" type="number" value="${x.balances.EUR}" style="width:80px"><br>
+      <button onclick="saveBal('${x.id}')">حفظ الأرصدة</button>
+      <button onclick="toggleBan('${x.id}', ${!x.disabled})" class="${x.disabled?'btn-success':'btn-danger'}">${x.disabled?'فك الحظر':'حظر الحساب'}</button>
+      <button onclick="delUser('${x.id}')" style="background:#555">حذف</button>
+    </div>`).join('') + `</div>`;
+}
+
+async function saveBal(id) {
+  const balances = {
+    USD: +document.getElementById(`u_${id}`).value,
+    SYP: +document.getElementById(`s_${id}`).value,
+    TRY: +document.getElementById(`t_${id}`).value,
+    EUR: +document.getElementById(`e_${id}`).value,
+  };
+  await api('/api/admin/users/' + id, { balances });
+  alert('تم تحديث الأرصدة');
+}
+
+async function toggleBan(id, disabled) {
+  await api('/api/admin/users/' + id, { disabled });
+  switchTab('users');
+}
+
+async function delUser(id) {
+  if (confirm('هل أنت تأكد من حذف هذا الحساب نهائياً؟')) {
+    await api('/api/admin/users/' + id, null, 'DELETE');
+    switchTab('users');
+  }
+}
+
+// 2. إدارة أسعار العملات
+async function renderRates(cnt) {
+  const r = await api('/api/admin/rates');
+  cnt.innerHTML = `
+    <div class="c" style="max-width:500px">
+      <h3>أسعار الصرف (مقابل 1 USD)</h3>
+      USD: <input id="r_usd" value="${r.USD||1}" disabled><br>
+      SYP (ليرة سورية): <input id="r_syp" value="${r.SYP||15000}"><br>
+      TRY (ليرة تركية): <input id="r_try" value="${r.TRY||34.5}"><br>
+      EUR (يورو): <input id="r_eur" value="${r.EUR||0.92}"><br>
+      <button onclick="saveRates()" class="btn-success" style="width:100%;margin-top:10px">تحديث أسعار الصرف</button>
+    </div>`;
+}
+
+async function saveRates() {
+  const rates = {
+    USD: 1,
+    SYP: +document.getElementById('r_syp').value,
+    TRY: +document.getElementById('r_try').value,
+    EUR: +document.getElementById('r_eur').value,
+  };
+  await api('/api/admin/rates', { rates });
+  alert('تم تحديث أسعار الصرف بنجاح');
+}
+
+// 3. طلبات التوثيق
+async function renderVerifications(cnt) {
+  const list = await api('/api/admin/verifications');
+  cnt.innerHTML = `<h3>طلبات التوثيق المعلقة (${list.length})</h3>` + (list.length === 0 ? '<p>لا توجد طلبات معلقة</p>' : list.map(x => `
+    <div class="c">
+      <b>${x.fullName}</b> (@${x.username})<br>
+      الهاتف: ${x.phone} | المنطقة: ${x.region}<br>
+      <button onclick="setVerif('${x.id}', 'approve')" class="btn-success">قبول التوثيق</button>
+      <button onclick="setVerif('${x.id}', 'reject')" class="btn-danger">رفض الطلب</button>
+    </div>`).join(''));
+}
+
+async function setVerif(id, action) {
+  await api('/api/admin/verifications/' + id, { action });
+  switchTab('verif');
+}
+
+// 4. إدارة التحويلات
+async function renderTx(cnt) {
+  const tx = await api('/api/admin/tx');
+  cnt.innerHTML = `<h3>سجل التحويلات</h3>` + tx.map(t => `
+    <div class="c" style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <b>من:</b> ${t.fromName} (${t.fromAccount})<br>
+        <b>إلى:</b> ${t.toName} (${t.toAccount})<br>
+        <b>المبلغ:</b> ${t.amount} ${t.currency} | <small>${t.date.substring(0,16)}</small>
+        ${t.status === 'cancelled' ? '<br><span style="color:red">ملاحظة: العملية ملغاة ومُرجعة</span>':''}
+      </div>
+      <div>
+        ${t.status !== 'cancelled' ? `<button onclick="cancelTx('${t.id}')" class="btn-danger">إلغاء وعكس العملية</button>`: ''}
+      </div>
+    </div>`).join('');
+}
+
+async function cancelTx(id) {
+  if(confirm('هل تريد إلغاء هذه العملية وإعادة المبلغ للمرسل؟')) {
+    const res = await api(`/api/admin/tx/${id}/cancel`, {});
+    alert(res.message || res.error);
+    switchTab('tx');
+  }
+}
+
+// 5. الدعم الفني
+async function renderSupport(cnt) {
+  const msgs = await api('/api/admin/support');
+  cnt.innerHTML = `<h3>رسائل الدعم الفني</h3>` + msgs.map(m => `
+    <div class="c">
+      <b>${m.userName} (${m.sender === 'admin' ? 'الإدارة' : 'المستخدم'}):</b>
+      <p>${m.text}</p>
+      <small>${m.date.substring(0,16)}</small>
+      ${m.sender === 'user' ? `<br><input id="reply_${m.userId}" placeholder="رد الدعم..."><button onclick="sendReply('${m.userId}')">إرسال الرد</button>` : ''}
+    </div>`).join('');
+}
+
+async function sendReply(userId) {
+  const text = document.getElementById('reply_' + userId).value;
+  if (!text) return;
+  await api('/api/admin/support/reply', { userId, text });
+  switchTab('support');
+}
+
+// 6. التخصيص البصري
+async function renderTheme(cnt) {
+  const st = await api('/api/admin/settings');
+  cnt.innerHTML = `
+    <div class="c" style="max-width:500px">
+      <h3>تعديل هوية التطبيق</h3>
+      اسم التطبيق: <input id="app_name" value="${st.appName||'بنك سوريا'}" style="width:100%"><br>
+      لون الثيم الأساسي: <input id="theme_col" type="color" value="${st.themeColor||'#0B1240'}" style="width:100%"><br>
+      <button onclick="saveSettings()" class="btn-success" style="width:100%;margin-top:10px">حفظ التغييرات</button>
+    </div>`;
+}
+
+async function saveSettings() {
+  await api('/api/admin/settings', {
+    appName: document.getElementById('app_name').value,
+    themeColor: document.getElementById('theme_col').value
+  });
+  alert('تم حفظ إعدادات الثيم');
+}
+
+T ? mainLayout() : login();
+</script>
+</body>
+</html>
