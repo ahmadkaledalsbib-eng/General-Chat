@@ -87,8 +87,7 @@ window.addEventListener('storage',e=>{
 if(e.key==='wallet'){try{const n=JSON.parse(e.newValue||'{}');if(!n.me){localStorage.removeItem('wallet');location.reload();return}Object.assign(S,n);if(S.acct&&S.acct.frozen){S.loggedIn=false;save();location.reload();return}applyTheme();if(!$('lockPin'))render()}catch(_){}}
 else if(e.key==='wallet_admin'){applyAdmin();if(!$('lockPin'))render()}});
 function sheet(h){$('sheetBody').innerHTML=h;$('sheet').classList.add('show')}
-function closeSheet(){$('sheet').classList.remove('show');stopScanCam()}
-$('sheet').onclick=e=>{if(e.target.id==='sheet')closeSheet()};
+function closeSheet(){$('sheet').classList.remove('show');stopScanCam()}$('sheet').onclick=e=>{if(e.target.id==='sheet')closeSheet()};
 const TABS=[['home','🏠','الرئيسية'],['tx','💱','التحويلات'],['cv','🔄','تحويل عملة'],['scan','<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 2px"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="8" y="8" width="8" height="8" rx="1"/></svg>','مسح QR'],['me','👤','حسابي']];
 function nav(){ $('nav').innerHTML=TABS.map(t=>b(t)).join('');}
 const b=t=>`<button class="${S.tab===t[0]?'on':''}" onclick="go('${t[0]}')"><i>${t[1]}</i>${t[2]}</button>`;
@@ -160,7 +159,7 @@ function convert(){sheet(`<h2 style="margin-top:0">تحويل بين العمل�
 <label>المبلغ</label><input id="camt" type="number" inputmode="decimal" min="0" step="0.01" oninput="updateConvertPreview()">
 <p id="cprev" style="color:var(--mut);text-align:center;margin:8px 0 4px"></p>
 <button class="btn" onclick="doConvert()">تحويل</button>`);updateConvertPreview()}
-function updateConvertPreview(){const f=$('cfrom').value,t=$('cto').value,m=parseFloat($('camt').value)||0;if(f===t){$('cprev').textContent='اختر عملتين مختلفتين';return}const res=(m-fee(m,'cv'))/RATES[f]*RATES[t];$('cprev').textContent=`${fmt(m,f)} = ${fmt(res,t)} (سعر الصرف)${fee(m,'cv')?' · عمولة '+fmt(fee(m,'cv'),f):''}`}
+function updateConvertPreview(){const f=$('cfrom').value,t=$('cto').value,m=parseFloat($('camt').value)\vert{}\vert{}0;if(f===t){$('cprev').textContent='اختر عملتين مختلفتين';return}const res=(m-fee(m,'cv'))/RATES[f]*RATES[t];$('cprev').textContent=`${fmt(m,f)} = ${fmt(res,t)} (سعر الصرف)${fee(m,'cv')?' · عمولة '+fmt(fee(m,'cv'),f):''}`}
 function doConvert(){const f=$('cfrom').value,t=$('cto').value,m=parseFloat($('camt').value);
 if(f===t)return toast('اختر عملتين مختلفتين');if(!(m>0))return toast('أدخل مبلغاً صحيحاً');if(m>S.bal[f])return toast('الرصيد غير كافٍ');
 const run=()=>{const fe=fee(m,'cv'),res=(m-fe)/RATES[f]*RATES[t];S.bal[f]=+(S.bal[f]-m).toFixed(2);S.bal[t]=+(S.bal[t]+res).toFixed(2);const d=new Date(),p=x=>String(x).padStart(2,'0'),ds=`${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
@@ -257,7 +256,19 @@ if(S.set.pinOn&&S.set.pin){lockScreen()}else{render()}}
 if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 boot();
 </script>
-<script src="firebase-config.js"></script>
+
+<!-- تعريف خريطة الاستيراد (Import Map) الخاصة بـ Firebase -->
+<script type="importmap">
+{
+  "imports": {
+    "firebase/app": "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js",
+    "firebase/analytics": "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js"
+  }
+}
+</script>
+
+<!-- استدعاء ملف الإعداد كـ Module -->
+<script type="module" src="firebase-config.js"></script>
 <script src="remote.js"></script>
 </body>
 </html>
