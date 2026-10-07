@@ -1,6 +1,6 @@
 /*
  الإعداد (مرة واحدة):
- 1) console.firebase.google.com ← مشروع جديد ← أضف تطبيق ويب ← انسخ القيم أدناه.
+ 1) console.firebase.google.com ← مشروع جديد ← أضف تطبيق ويب ← تم ربط القيم أدناه.
  2) Build ← Firestore Database ← Create (production mode).
  3) Build ← Authentication ← Email/Password ← فعّل، ثم أضف مستخدماً (بريدك أنت = الأدمن).
  4) Firestore ← Rules ← الصق التالي (بدّل البريد ببريدك) ثم Publish:
@@ -15,9 +15,27 @@
    }
  }
 */
-window.FB_CFG = {
-  apiKey: "PASTE_API_KEY",
-  authDomain: "PASTE_PROJECT.firebaseapp.com",
-  projectId: "PASTE_PROJECT_ID",
-  appId: "PASTE_APP_ID"
+
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyBslRluFphGEHmrLkSrzIgFfR57Xwmc2LE",
+  authDomain: "wallet-dcd19.firebaseapp.com",
+  projectId: "wallet-dcd19",
+  storageBucket: "wallet-dcd19.firebasestorage.app",
+  messagingSenderId: "823442052558",
+  appId: "1:823442052558:web:e31d822a8f1f9cd81c879f",
+  measurementId: "G-9MXCWMCPYE"
 };
+
+// حفظ الإعدادات على النافذة العامة لضمان التوافق مع الكود السابق
+window.FB_CFG = firebaseConfig;
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
+export { app, analytics };
