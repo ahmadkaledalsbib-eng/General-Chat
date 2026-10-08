@@ -1,0 +1,111 @@
+<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>محفظة الأسد</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{--bg:#0e1116;--card:#1a1f29;--tx:#f2f4f8;--mu:#8b93a3;--ac:#d4a017;--ok:#2ecc71;--er:#e74c3c}
+[data-t=light]{--bg:#f3f5f9;--card:#fff;--tx:#14181f;--mu:#6a7384}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+body{font-family:system-ui,Tahoma,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;padding-bottom:calc(150px + env(safe-area-inset-bottom))}
+.w{max-width:480px;margin:auto;padding:calc(14px + env(safe-area-inset-top)) 14px 0}
+.card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:12px}
+.bal{display:grid;grid-template-columns:1fr 1fr;gap:8px}.bal div{background:var(--bg);border-radius:12px;padding:10px;text-align:center}.bal b{display:block;font-size:17px;color:var(--ac)}.bal small{color:var(--mu)}
+button{font:inherit;cursor:pointer;border:0;border-radius:12px;padding:11px;background:var(--ac);color:#111;font-weight:700}
+.g{background:var(--bg);color:var(--tx)}.row{display:flex;gap:8px}.row>*{flex:1}
+input,select,textarea{width:100%;font:inherit;padding:11px;border-radius:12px;border:1px solid #8884;background:var(--bg);color:var(--tx);margin:5px 0}
+.tx{padding:10px 0;border-bottom:1px solid #8883;display:flex;justify-content:space-between;user-select:none}.in{color:var(--ok)}.out{color:var(--er)}
+nav{position:fixed;bottom:0;inset-inline:0;background:var(--card);display:flex;justify-content:space-around;align-items:center;padding:8px 4px calc(8px + env(safe-area-inset-bottom));border-top:1px solid #8883}
+nav button{background:none;color:var(--mu);font-size:11px;padding:6px 8px}nav button.on{color:var(--ac)}nav i{display:block;font-style:normal;font-size:20px}
+nav .sc{width:60px;height:60px;border-radius:50%;margin-top:-32px;background:var(--ac);color:#111;font-size:26px;border:4px solid var(--bg)}
+footer{text-align:center;color:var(--mu);font-size:12px;padding:10px;margin-bottom:60px}
+.m{position:fixed;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;z-index:9;padding:20px}.m>div{background:var(--card);border-radius:18px;padding:18px;width:100%;max-width:400px}
+#toast{position:fixed;top:calc(10px + env(safe-area-inset-top));inset-inline:10px;z-index:99;background:var(--ac);color:#111;padding:14px;border-radius:14px;font-weight:700;transform:translateY(-150%);transition:.4s;max-width:460px;margin:auto}#toast.s{transform:none}
+.av{width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,var(--ac),#8a5a00);display:flex;align-items:center;justify-content:center;font-size:48px;margin:8px auto}
+.it{display:flex;justify-content:space-between;align-items:center;padding:13px 4px;border-bottom:1px solid #8883}
+h3{margin:4px 0 10px}.c{text-align:center}.mu{color:var(--mu);font-size:13px}
+</style></head><body>
+<div id="toast"></div><div class="w" id="v"></div><div id="nv"></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script src="firebase-config.js"></script><script src="shared.js"></script>
+<script>
+let D=load(),U=null,tab='home',seen=new Set(),lang='ar',pinOK=0;
+const P=JSON.parse(localStorage.getItem('asad_pref')||'{"confirm":1,"share":1,"def":"SYP","code":"","bio":0,"pin":"","face":0,"theme":"dark"}');
+const savP=()=>localStorage.setItem('asad_pref',JSON.stringify(P));
+const T={ar:['الرئيسية','المعاملات','تحويل','حسابي'],en:['Home','Activity','Exchange','Account'],tr:['Ana Sayfa','İşlemler','Çevir','Hesabım'],de:['Start','Aktivität','Tausch','Konto']};
+document.documentElement.dataset.t=P.theme;
+// أصوات
+let ac;function beep(f,d=.12){try{ac=ac||new (AudioContext||webkitAudioContext)();f.forEach((x,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=x;o.connect(g);g.connect(ac.destination);const t=ac.currentTime+i*d;g.gain.setValueAtTime(.18,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.start(t);o.stop(t+d)})}catch(x){}}
+const SND={in:[880,1175,1480],sup:[660,880,1100,880],ok:[700,1000],err:[300,220],adm:[500,750,500,750],tap:[1200]};
+document.addEventListener('click',ev=>{if(ev.target.closest('button'))beep(SND.tap,.05)});
+function toast(t,s='adm'){const x=document.getElementById('toast');x.textContent=t;x.classList.add('s');beep(SND[s]);setTimeout(()=>x.classList.remove('s'),4500)}
+const sync=()=>{D=load();U=D.users.find(u=>U&&u.id==U.id)||U;
+ D.notif.filter(n=>U&&n.uid==U.id&&!seen.has(n.id)).forEach(n=>{seen.add(n.id);toast(n.txt,n.snd||'adm')});
+ if(U&&!U.active)render()};
+setInterval(()=>{sync();if(!U||document.querySelector('.m')||document.activeElement.matches('input,textarea,select'))return;if(tab=='sup'){D=load();$('#chat')&&($('#chat').innerHTML=chatH())}else if(['home','tx'].includes(tab))render()},2500);
+const $=s=>document.querySelector(s);
+const fm=(n,c)=>Number(n).toLocaleString('en',{maximumFractionDigits:2})+' '+SYM[c];
+function modal(h){const m=document.createElement('div');m.className='m';m.innerHTML='<div>'+h+'</div>';m.onclick=ev=>{if(ev.target==m)m.remove()};document.body.appendChild(m);return m}
+function showAuth(m){$('#nv').innerHTML='';$('#v').innerHTML=`<div class="c" style="padding-top:36px"><div style="font-size:60px">🦁</div><h2>محفظة الأسد</h2><p class="mu" style="margin:6px 0 16px">${m=='in'?'تسجيل الدخول':'إنشاء حساب جديد'}</p>${m=='in'?`<input id="em" type="email" placeholder="البريد الإلكتروني" autocomplete="username"><input id="pw" type="password" placeholder="كلمة المرور" autocomplete="current-password"><button style="width:100%;margin-top:8px" onclick="doLogin()">دخول</button><p class="mu" style="margin-top:16px"><a href="#" style="color:var(--ac)" onclick="forgot();return false">نسيت كلمة المرور؟</a></p><p class="mu" style="margin-top:10px">ليس لديك حساب؟ <a href="#" style="color:var(--ac)" onclick="showAuth('up');return false">إنشاء حساب</a></p>`:`<input id="nm" placeholder="الاسم الكامل"><input id="em" type="email" placeholder="البريد الإلكتروني"><input id="ph" type="tel" placeholder="رقم الهاتف"><input id="rg" placeholder="المنطقة"><input id="pw" type="password" placeholder="كلمة المرور (6 أحرف على الأقل)"><input id="p2" type="password" placeholder="تأكيد كلمة المرور"><button style="width:100%;margin-top:8px" onclick="doSignup()">إنشاء الحساب</button><p class="mu" style="margin-top:16px">لديك حساب؟ <a href="#" style="color:var(--ac)" onclick="showAuth('in');return false">تسجيل الدخول</a></p>`}</div><footer>جميع الحقوق محفوظة لدى محفظة الأسد</footer>`}
+function doLogin(){const em=$('#em').value.trim(),pw=$('#pw').value;if(!em||!pw)return toast('أدخل البريد وكلمة المرور','err');auth.signInWithEmailAndPassword(em,pw).catch(x=>toast(aerr(x),'err'))}
+let PEND=null;
+function doSignup(){const nm=$('#nm').value.trim(),em=$('#em').value.trim(),pw=$('#pw').value;if(!nm||!em||!$('#ph').value.trim())return toast('أكمل جميع الحقول','err');if(pw!=$('#p2').value)return toast('كلمتا المرور غير متطابقتين','err');PEND={name:nm,phone:$('#ph').value.trim(),region:$('#rg').value.trim()};auth.createUserWithEmailAndPassword(em,pw).catch(x=>{PEND=null;toast(aerr(x),'err')})}
+function forgot(){const em=($('#em')||{}).value;if(!em)return toast('اكتب بريدك أولاً','err');auth.sendPasswordResetEmail(em.trim()).then(()=>toast('أُرسل رابط إعادة التعيين إلى بريدك','ok')).catch(x=>toast(aerr(x),'err'))}
+function pwr(){auth.sendPasswordResetEmail(U.email).then(()=>toast('أُرسل رابط تغيير كلمة المرور إلى بريدك','ok')).catch(x=>toast(aerr(x),'err'))}
+function genPub(){let p;do{p='AS-'+Math.floor(100000+Math.random()*900000)}while(D.users.some(u=>u.pub==p));return p}
+function onMain(){const fu=auth.currentUser;if(!fu)return;D=load();
+ if(!U){let u=D.users.find(x=>x.id==fu.uid);
+  if(!u){const p=PEND||{};D.users.push({id:fu.uid,name:p.name||fu.email.split('@')[0],email:fu.email,phone:p.phone||'',region:p.region||'',pub:genPub(),priv:'PV-'+Math.floor(10000+Math.random()*89999),bal:{SYP:0,USD:0,TRY:0,EUR:0},active:1});PEND=null;save(D);return}
+  U=u;seen=new Set(D.notif.map(n=>n.id));render();return}
+ sync()}
+function lockTick(){const on=CT.off&&Date.now()<CT.until;let L=document.getElementById('lk');if(!on){L&&L.remove();return}
+ if(!L){L=document.createElement('div');L.id='lk';L.style.cssText='position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px';document.body.appendChild(L)}
+ const s=Math.max(0,Math.floor((CT.until-Date.now())/1000)),p=n=>String(n).padStart(2,'0');
+ L.innerHTML=`<div style="font-size:64px">🛠️</div><h2>التطبيق متوقف مؤقتاً</h2><p class="mu" style="margin:10px 0">${e(CT.msg||'نعمل على الصيانة، سنعود قريباً')}</p><p class="mu">يعود العمل بعد</p><h1 style="color:var(--ac);font-size:44px;direction:ltr;margin:8px">${p(Math.floor(s/3600))}:${p(Math.floor(s%3600/60))}:${p(s%60)}</h1>`}
+function render(){D=load();U=D.users.find(x=>x.id==U.id);
+ if(!U.active){$('#nv').innerHTML='';$('#v').innerHTML='<div class="c card" style="margin-top:80px"><h2>⛔ الحساب معطّل</h2><p class="mu">تواصل مع الإدارة لإعادة التفعيل</p><br><button onclick="auth.signOut()">خروج</button></div>';return}
+ const L=T[lang];$('#nv').innerHTML=`<nav>${[['home','🏠',0],['tx','🧾',1]].map(([k,i,j])=>`<button class="${tab==k?'on':''}" onclick="go('${k}')"><i>${i}</i>${L[j]}</button>`).join('')}<button class="sc" onclick="scan()">⌖</button>${[['ex','💱',2],['acc','👤',3]].map(([k,i,j])=>`<button class="${tab==k?'on':''}" onclick="go('${k}')"><i>${i}</i>${L[j]}</button>`).join('')}</nav>`;
+ $('#v').innerHTML=({home,tx,ex,acc,info,sec,trf,sup,set})[tab]()+'<footer>جميع الحقوق محفوظة لدى محفظة الأسد</footer>'}
+const go=t=>{tab=t;render();scrollTo(0,0)};
+const mine=()=>D.tx.filter(t=>t.from==U.id||t.to==U.id).reverse();
+function row(t){const o=t.from==U.id;return `<div class="tx" data-id="${t.id}"><span>${o?'⬆️ إلى':'⬇️ من'} ${e(o?nm(t.to):(t.anon?'مجهول':nm(t.from)))}<br><small class="mu">${new Date(t.t).toLocaleString('ar')}</small></span><b class="${o?'out':'in'}">${o?'-':'+'}${fm(t.amt,t.cur)}</b></div>`}
+const nm=id=>(D.users.find(u=>u.id==id)||{name:'—'}).name;
+function home(){const l=mine().slice(0,6);setTimeout(lp,0);
+ return `<h3>الرصيد</h3><div class="card bal">${CUR.map(c=>`<div><small>${{SYP:'سوري',USD:'دولار',TRY:'تركي',EUR:'يورو'}[c]}</small><b>${fm(U.bal[c]||0,c)}</b></div>`).join('')}</div>
+ <div class="row" style="margin-bottom:12px"><button onclick="sendM()">⬆️ إرسال</button><button class="g" onclick="recvM()">⬇️ استقبال</button></div>
+ <div class="card"><h3>سجل الحوالات</h3><p class="mu">اضغط مطولاً 3 ثوانٍ لعرض التفاصيل</p>${l.map(row).join('')||'<p class="mu c">لا توجد حوالات</p>'}<div class="row" style="margin-top:12px"><button onclick="sendM()">إرسال</button><button class="g" onclick="fav()">★ إضافة للمفضلة</button></div></div>`}
+function tx(){setTimeout(lp,0);return `<h3>المعاملات</h3><div class="card">${mine().map(row).join('')||'<p class="mu c">لا توجد معاملات</p>'}</div>`}
+function lp(){document.querySelectorAll('.tx').forEach(el=>{let t;const s=()=>t=setTimeout(()=>detail(el.dataset.id),3000),c=()=>clearTimeout(t);['touchstart','mousedown'].forEach(n=>el.addEventListener(n,s));['touchend','touchmove','mouseup','mouseleave'].forEach(n=>el.addEventListener(n,c))})}
+function detail(id){const t=D.tx.find(x=>x.id==id);beep(SND.ok);const m=modal(`<h3>تفاصيل الحوالة</h3><p>المرسل: <b>${e(t.anon&&t.to==U.id?'مجهول':nm(t.from))}</b></p><p>المستلم: <b>${e(nm(t.to))}</b></p><p>رمز المعاملة: <b>${e(t.id)}</b></p><p>المبلغ: <b>${fm(t.amt,t.cur)}</b></p><p>التوقيت: <b>${new Date(t.t).toLocaleString('ar')}</b></p>${t.note?`<p>ملاحظة: ${e(t.note)}</p>`:''}<button style="width:100%" onclick="this.closest('.m').remove()">إغلاق</button>`)}
+function fav(){const f=JSON.parse(localStorage.getItem('fav')||'[]');const l=mine()[0];if(!l)return toast('لا توجد حوالة','err');const p=D.users.find(u=>u.id==(l.from==U.id?l.to:l.from)).pub;if(!f.includes(p))f.push(p);localStorage.setItem('fav',JSON.stringify(f));toast('أُضيف للمفضلة ★','ok')}
+function sendM(to=''){const f=JSON.parse(localStorage.getItem('fav')||'[]');modal(`<h3>إرسال</h3><input id="a" placeholder="رقم الحساب المراد الإرسال له" value="${e(to)}" list="fl"><datalist id="fl">${f.map(x=>`<option>${x}</option>`).join('')}</datalist><div class="row"><input id="am" type="number" placeholder="المبلغ"><select id="cu">${CUR.map(c=>`<option ${c==P.def?'selected':''}>${c}</option>`).join('')}</select></div><textarea id="nt" rows="2" placeholder="ملاحظات"></textarea><label class="mu"><input type="checkbox" id="an" style="width:auto"> إخفاء الهوية للمرسل</label>${P.code?'<input id="cd" placeholder="رمز التحويل">':''}<button style="width:100%;margin-top:8px" onclick="doSend()">إرسال</button>`)}
+function doSend(){D=load();U=D.users.find(x=>x.id==U.id);const to=D.users.find(u=>u.pub==$('#a').value.trim()),am=+$('#am').value,c=$('#cu').value;
+ if(!to||to.id==U.id)return toast('رقم الحساب غير صحيح','err');if(!to.active)return toast('حساب المستلم معطّل','err');if(!(am>0)||am>(U.bal[c]||0))return toast('الرصيد غير كافٍ','err');
+ const an=!!($('#an')&&$('#an').checked),nt=$('#nt')?$('#nt').value:'';
+ if(P.code&&$('#cd').value!=P.code)return toast('رمز التحويل خاطئ','err');if(P.pin&&prompt('أدخل رمز PIN')!=P.pin)return toast('PIN خاطئ','err');
+ const go=()=>{D=load();const a=D.users.find(x=>x.id==U.id),b=D.users.find(x=>x.id==to.id);a.bal[c]-=am;b.bal[c]=(b.bal[c]||0)+am;
+  const id='TX'+Date.now().toString(36).toUpperCase();D.tx.push({id,from:a.id,to:b.id,amt:am,cur:c,t:Date.now(),anon:an,note:nt});
+  D.notif.push({id:'n'+Date.now(),uid:b.id,txt:`💰 وصلتك حوالة ${fm(am,c)} من ${an?'مجهول':a.name}`,snd:'in'});save(D);document.querySelectorAll('.m').forEach(x=>x.remove());toast('✔ تم تحويل '+fm(am,c)+' إلى '+to.name,'ok');tab='home';render()};
+ if(P.confirm){const cm=modal(`<h3>تأكيد</h3><p>إرسال ${fm(am,c)} إلى ${e(to.name)}؟</p><div class="row"><button id="y">نعم</button><button class="g" onclick="this.closest('.m').remove()">لا</button></div>`);cm.querySelector('#y').onclick=()=>{cm.remove();go()}}else go()}
+function recvM(){const m=modal(`<h3 class="c">استقبال</h3><div id="qr" style="display:flex;justify-content:center;background:#fff;padding:12px;border-radius:12px"></div><p class="c" style="margin:10px"><b id="pn">${U.pub}</b></p><button style="width:100%" onclick="navigator.clipboard?.writeText('${U.pub}');toast('تم النسخ','ok')">📋 نسخ رقم الحساب</button>`);try{new QRCode($('#qr'),{text:U.pub,width:180,height:180})}catch(x){$('#qr').textContent='QR'}}
+function scan(){const m=modal(`<h3>مسح الباركود</h3><video id="vd" style="width:100%;border-radius:12px;background:#000" playsinline></video><input id="mn" placeholder="أو أدخل الرقم يدوياً"><button style="width:100%" onclick="const v=$('#mn').value;if(v){window.stop2&&stop2();this.closest('.m').remove();sendM(v)}">متابعة</button>`);
+ if(!('BarcodeDetector' in window)||!navigator.mediaDevices)return;let s,run=1;navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(st=>{s=st;$('#vd').srcObject=st;$('#vd').play();const bd=new BarcodeDetector({formats:['qr_code']});(function l(){if(!run)return;bd.detect($('#vd')).then(r=>{if(r[0]){run=0;s.getTracks().forEach(t=>t.stop());m.remove();beep(SND.ok);sendM(r[0].rawValue)}else setTimeout(l,300)}).catch(()=>setTimeout(l,500))})()}).catch(()=>{});
+ window.stop2=()=>{run=0;s&&s.getTracks().forEach(t=>t.stop())};m.addEventListener('click',()=>{if(!document.body.contains(m))stop2()})}
+function ex(){const r=D.rates;return `<h3>تحويل العملات</h3><div class="card"><select id="f" onchange="calc()">${CUR.map(c=>`<option>${c}</option>`).join('')}</select><input id="x" type="number" placeholder="المبلغ" oninput="calc()"><select id="t" onchange="calc()">${CUR.map((c,i)=>`<option ${i==1?'selected':''}>${c}</option>`).join('')}</select><h2 class="c" id="rs" style="color:var(--ac);margin:10px">—</h2><p class="mu c">أسعار الصرف تحددها الإدارة: 1$ = ${r.SYP} ل.س | ${r.TRY} ₺ | ${r.EUR} €</p><button style="width:100%;margin-top:8px" onclick="doEx()">تحويل</button></div>`}
+const cv=(a,f,t)=>a/D.rates[f]*D.rates[t];
+function calc(){const a=+$('#x').value;$('#rs').textContent=a>0?fm(cv(a,$('#f').value,$('#t').value),$('#t').value):'—'}
+function doEx(){const a=+$('#x').value,f=$('#f').value,t=$('#t').value;D=load();U=D.users.find(x=>x.id==U.id);if(f==t||!(a>0)||a>(U.bal[f]||0))return toast('تحقق من المبلغ','err');U.bal[f]-=a;U.bal[t]=(U.bal[t]||0)+cv(a,f,t);save(D);toast('تم التحويل بين العملات ✔','ok');render()}
+const AV=['🦁','🐯','🦅','🐺','🦊','🐉'];
+function acc(){return `<h3 class="c">حسابي</h3><div class="av">${AV[Math.floor(Date.now()/864e5)%AV.length]}</div><p class="c mu">رقم الحساب الخاص</p><p class="c"><b>${U.priv}</b></p><br><button style="width:100%;margin-bottom:12px" onclick="go('info')">معلومات الحساب</button>
+<div class="card">${[['sec','🔒','إعدادات الأمان'],['trf','💸','إعدادات التحويل'],['sup','🎧','خدمة العملاء'],['set','⚙️','اللغة • الثيم • الحساب']].map(([k,i,l])=>`<div class="it" onclick="go('${k}')">${i} ${l}<span>‹</span></div>`).join('')}</div>`}
+function info(){return `<button class="g" onclick="go('acc')">← رجوع</button><h3 style="margin-top:10px">معلومات الحساب</h3><div class="card">${[['الاسم',U.name],['البريد',U.email],['كلمة المرور','••••••••'],['المنطقة',U.region],['الهاتف',U.phone],['رقم الحساب العام',U.pub]].map(([a,b])=>`<div class="it"><span class="mu">${a}</span><b>${e(b)}</b></div>`).join('')}</div><button class="g" style="width:100%" onclick="pwr()">تغيير كلمة المرور (رابط عبر البريد)</button>`}
+const sw=(k,l)=>`<div class="it">${l}<input type="checkbox" style="width:auto" ${P[k]?'checked':''} onchange="P['${k}']=this.checked?1:0;savP();toast('تم الحفظ','ok')"></div>`;
+function sec(){return `<button class="g" onclick="go('acc')">← رجوع</button><h3 style="margin-top:10px">إعدادات الأمان</h3><div class="card">${sw('bio','وضع البصمة')}${sw('face','بصمة الوجه')}<div class="it">رمز PIN<input style="width:110px" type="password" maxlength="6" placeholder="${P.pin?'••••':'تعيين'}" onchange="P.pin=this.value;savP();toast('تم حفظ الـPIN','ok')"></div><div class="it">تغيير PIN<input style="width:110px" type="password" maxlength="6" placeholder="جديد" onchange="if(P.pin){P.pin=this.value;savP();toast('تم التغيير','ok')}else toast('عيّن PIN أولاً','err')"></div></div>`}
+function trf(){return `<button class="g" onclick="go('acc')">← رجوع</button><h3 style="margin-top:10px">إعدادات التحويل</h3><div class="card">${sw('confirm','رسالة تأكيد (نعم / لا)')}${sw('share','السماح بمشاركة حسابك')}<div class="it">العملة الافتراضية<select style="width:110px" onchange="P.def=this.value;savP()">${CUR.map(c=>`<option ${c==P.def?'selected':''}>${c}</option>`).join('')}</select></div><div class="it">رمز تحويل<input style="width:110px" value="${e(P.code)}" placeholder="اختياري" onchange="P.code=this.value;savP();toast('تم الحفظ','ok')"></div></div>`}
+const chatH=()=>D.msgs.filter(m=>m.uid==U.id).map(m=>`<p style="text-align:${m.from=='u'?'start':'end'};margin:6px 0"><span style="background:${m.from=='u'?'var(--bg)':'var(--ac)'};color:${m.from=='u'?'var(--tx)':'#111'};padding:7px 11px;border-radius:12px;display:inline-block">${e(m.text)}</span></p>`).join('')||'<p class="mu c">اكتب رسالتك للإدارة</p>';
+function sup(){return `<button class="g" onclick="go('acc')">← رجوع</button><h3 style="margin-top:10px">خدمة العملاء</h3><div class="card" id="chat" style="min-height:200px">${chatH()}</div><div class="row"><input id="sm" placeholder="اكتب رسالتك..." onkeydown="if(event.key=='Enter')sendS()"><button style="flex:0 0 80px" onclick="sendS()">إرسال</button></div>`}
+function sendS(){const v=$('#sm').value.trim();if(!v)return;D=load();D.msgs.push({uid:U.id,from:'u',text:v,t:Date.now(),read:0});save(D);$('#sm').value='';$('#chat').innerHTML=chatH();toast('تم إرسال رسالتك للإدارة','ok')}
+function set(){return `<button class="g" onclick="go('acc')">← رجوع</button><div class="card" style="margin-top:10px"><div class="it">اللغة<select style="width:130px" onchange="lang=this.value;render()"><option value="ar">العربية</option><option value="en" ${lang=='en'?'selected':''}>English</option><option value="tr" ${lang=='tr'?'selected':''}>Türkçe</option><option value="de" ${lang=='de'?'selected':''}>Deutsch</option></select></div>
+<div class="it">الثيم<button class="g" onclick="P.theme=P.theme=='dark'?'light':'dark';document.documentElement.dataset.t=P.theme;savP()">🌓 تبديل</button></div>
+<div class="it">تعطيل الحساب<button style="background:var(--er);color:#fff" onclick="dis()">تعطيل</button></div><div class="it">رقم الإصدار<b>${D.ver}</b></div><div class="it">تسجيل الخروج<button class="g" onclick="out()">خروج</button></div></div>`}
+function dis(){modal(`<h3>تعطيل الحساب؟</h3><p class="mu">لن تتمكن من الدخول حتى تعيد الإدارة تفعيله.</p><div class="row"><button id="y" style="background:var(--er);color:#fff">نعم</button><button class="g" onclick="this.closest('.m').remove()">لا</button></div>`).querySelector('#y').onclick=()=>{D=load();D.users.find(x=>x.id==U.id).active=0;save(D);document.querySelector('.m').remove();render()}}
+function out(){modal(`<h3>تأكيد تسجيل الخروج؟</h3><div class="row"><button id="y">نعم</button><button class="g" onclick="this.closest('.m').remove()">لا</button></div>`).querySelector('#y').onclick=()=>{document.querySelector('.m').remove();auth.signOut()}}
+setInterval(lockTick,1000);startCtl(lockTick);
+auth.onAuthStateChanged(fu=>{if(fu){startMain(onMain)}else{stopMain();U=null;tab='home';showAuth('in')}});
+</script></body></html>
