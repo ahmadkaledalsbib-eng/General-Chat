@@ -1,274 +1,1040 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>المحفظة</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0e1230">
-<link rel="icon" href="icon-192.png">
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-:root{--bg:#0e1230;--card:#1a2050;--card2:#232a63;--tx:#f2f4ff;--mut:#9aa3d6;--ac:#6f8cff;--in:#2fc4a8;--out:#ff6b81;--nav:#161b45;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
-@media(prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#eef0fb;--card:#fff;--card2:#e3e7fa;--tx:#151a3d;--mut:#5b648f;--nav:#fff}}
-:root[data-theme="light"]{--bg:#eef0fb;--card:#fff;--card2:#e3e7fa;--tx:#151a3d;--mut:#5b648f;--nav:#fff}
-:root[data-theme="dark"]{--bg:#0e1230;--card:#1a2050;--card2:#232a63;--tx:#f2f4ff;--mut:#9aa3d6;--nav:#161b45}
-*{box-sizing:border-box;margin:0}
-html,body{height:100%}
-body{background:var(--bg);color:var(--tx);font-family:Cairo,Tahoma,sans-serif;max-width:480px;margin:auto;position:relative}
-main{padding:16px 16px calc(110px + env(safe-area-inset-bottom,0px));min-height:100%}
-h2{font-size:1.1rem;margin:18px 0 10px}
-.card{background:var(--card);border-radius:18px;padding:14px}
-.row{display:flex;align-items:center;gap:10px}
-.sp{justify-content:space-between}
-.bal{padding:22px 18px;background:linear-gradient(135deg,var(--card2),var(--card))}
-.bal b{font-size:1.6rem;font-weight:700;letter-spacing:.3px}
-.cur{display:flex;gap:6px;margin-top:10px}
-.cur button,.chip{background:var(--card);color:var(--mut);border:0;border-radius:99px;padding:4px 11px;font:inherit;font-size:.82rem;cursor:pointer}
-.cur button.on{background:var(--ac);color:#fff}
-.acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
-.big{border:0;border-radius:16px;padding:16px;font:inherit;font-weight:700;color:#fff;font-size:1.05rem;cursor:pointer}
-.in{background:#1f8f7c}.out{background:#a8344d}
-.tile-g{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.tile{background:var(--card);border-radius:16px;padding:16px 8px;text-align:center;cursor:pointer;border:0;color:var(--tx);font:inherit}
-.tile i{display:block;font-style:normal;font-size:1.6rem;margin-bottom:4px}
-.tx{display:flex;justify-content:space-between;align-items:center;background:var(--card);border-radius:14px;padding:12px 14px;margin-bottom:8px}
-.tx small{color:var(--mut);display:block}
-.pos{color:var(--in);font-weight:700;direction:ltr}.neg{color:var(--out);font-weight:700;direction:ltr}
-.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;padding:8px 12px calc(10px + env(safe-area-inset-bottom,0px))}
-.nav div{background:var(--nav);border-radius:22px;display:flex;justify-content:space-around;padding:8px 4px;box-shadow:0 -4px 20px #0004}
-.nav button{background:0;border:0;color:var(--mut);font:inherit;font-size:.78rem;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;flex:1}
-.nav button i{font-style:normal;font-size:1.25rem}
-.nav button.on{color:var(--ac);font-weight:700}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محفظة الأسد - Al-Assad Wallet</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-card: #1e293b;
+            --accent: #059669;
+            --accent-hover: #10b981;
+            --gold: #d97706;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --danger: #ef4444;
+            --border: #334155;
+        }
 
-input,select{width:100%;background:var(--card);color:var(--tx);border:1px solid var(--card2);border-radius:12px;padding:12px;font:inherit;margin:6px 0 12px}
-label{color:var(--mut);font-size:.9rem}
-.btn{width:100%;background:var(--ac);color:#fff;border:0;border-radius:14px;padding:14px;font:inherit;font-weight:700;cursor:pointer}
-.sheet{position:fixed;inset:0;background:#000a;display:none;align-items:flex-end;justify-content:center;z-index:9}
-.sheet.show{display:flex}
-.sheet>div{background:var(--bg);width:100%;max-width:480px;border-radius:24px 24px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom,0px));max-height:90%;overflow:auto}
-.qr{background:#fff;border-radius:18px;padding:14px;width:240px;margin:12px auto}
-.qr svg{width:100%;display:block}
-.addr{word-break:break-all;text-align:center;direction:ltr;color:var(--mut);font-size:.9rem}
-.set{display:flex;justify-content:space-between;align-items:center;background:var(--card);border-radius:14px;padding:14px;margin-bottom:8px;cursor:pointer;width:100%;border:0;color:var(--tx);font:inherit}
-.av{width:84px;height:84px;border-radius:50%;background:var(--card2);margin:8px auto;display:grid;place-items:center;font-size:2.4rem}
-.toast{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);background:var(--ac);color:#fff;padding:10px 18px;border-radius:99px;z-index:99;display:none}
-.empty{text-align:center;color:var(--mut);padding:30px}
-</style>
+        .light-theme {
+            --bg-primary: #f1f5f9;
+            --bg-card: #ffffff;
+            --accent: #059669;
+            --accent-hover: #10b981;
+            --gold: #d97706;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --danger: #dc2626;
+            --border: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 450px;
+            height: 92vh;
+            background: var(--bg-card);
+            border-radius: 28px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid var(--border);
+        }
+
+        /* Mode Switcher Bar (User vs Admin) */
+        .top-mode-bar {
+            background: #0284c7;
+            color: white;
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .mode-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        /* Screen Views */
+        .view-section {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: none;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        /* Balances Cards */
+        .balance-slider {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            scrollbar-width: none;
+        }
+
+        .balance-card {
+            min-width: 140px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .balance-card h4 { font-size: 12px; color: var(--text-muted); }
+        .balance-card p { font-size: 18px; font-weight: bold; color: var(--gold); margin-top: 5px; }
+
+        /* Action Buttons (Send / Receive) */
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: white;
+            transition: 0.2s;
+        }
+
+        .btn-send { background: var(--accent); }
+        .btn-receive { background: #3b82f6; }
+        .btn-action:active { transform: scale(0.97); }
+
+        /* Transactions History */
+        .history-section {
+            background: rgba(0,0,0,0.1);
+            border-radius: 16px;
+            padding: 12px;
+            margin-top: 10px;
+            border: 1px solid var(--border);
+        }
+
+        .history-title {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .tx-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        .tx-item:hover { background: rgba(255,255,255,0.03); }
+
+        .tx-bottom-btns {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-small {
+            flex: 1;
+            padding: 8px;
+            font-size: 12px;
+            border-radius: 8px;
+            border: none;
+            background: var(--border);
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            height: 65px;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            position: relative;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 10px;
+            color: var(--text-muted);
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+
+        .nav-item.active { color: var(--accent); font-weight: bold; }
+        .nav-item span { font-size: 18px; margin-bottom: 2px; }
+
+        /* Floating Center Scanner Button */
+        .scanner-btn {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, var(--gold), #b45309);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 22px;
+            box-shadow: 0 4px 15px rgba(217, 119, 6, 0.4);
+            margin-top: -25px;
+            border: 3px solid var(--bg-card);
+            cursor: pointer;
+        }
+
+        /* Modals & Popups */
+        .modal {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 20px;
+            width: 100%;
+            max-width: 360px;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 12px; left: 15px;
+            border: none;
+            background: none;
+            color: var(--text-muted);
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        /* Forms & Inputs */
+        .input-group {
+            margin-bottom: 12px;
+            text-align: right;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .input-group input, .input-group select, .input-group textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: rgba(0,0,0,0.2);
+            color: var(--text);
+            outline: none;
+        }
+
+        /* Account Settings List */
+        .account-menu-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        /* Profile Header */
+        .profile-header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .profile-img-container {
+            position: relative;
+            width: 75px;
+            height: 75px;
+            margin: 0 auto 8px;
+        }
+
+        .profile-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid var(--gold);
+            object-fit: cover;
+        }
+
+        .qr-placeholder {
+            width: 150px;
+            height: 150px;
+            background: white;
+            margin: 15px auto;
+            padding: 10px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: black;
+            font-weight: bold;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .footer-rights {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-muted);
+            padding: 10px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 22px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc; transition: .4s; border-radius: 22px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px;
+            background-color: white; transition: .4s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--accent); }
+        input:checked + .slider:before { transform: translateX(18px); }
+
+        /* Admin Specific Styling */
+        .admin-card {
+            background: rgba(2, 132, 199, 0.1);
+            border: 1px solid #0284c7;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+    </style>
 </head>
 <body>
-<div class="toast" id="toast"></div>
-<main id="app"></main>
-<div class="nav"><div id="nav"></div></div>
-<div class="sheet" id="sheet"><div id="sheetBody"></div></div>
+
+<div class="app-container">
+    <!-- Top Bar for Switching to Admin Panel Mode -->
+    <div class="top-mode-bar">
+        <span id="appHeaderTitle">محفظة الأسد - تطبيق المستخدم</span>
+        <button class="mode-btn" onclick="toggleAdminView()" id="toggleViewBtn">لوحة التحكم ⚙️</button>
+    </div>
+
+    <!-- USER APP MAIN VIEW -->
+    <div id="userAppView" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+        
+        <!-- View 1: Home Dashboard -->
+        <div id="tab-home" class="view-section active">
+            <!-- Balances Display -->
+            <div class="balance-slider">
+                <div class="balance-card">
+                    <h4>الرصيد بالسوري</h4>
+                    <p id="bal-syp">15,000,000 ل.س</p>
+                </div>
+                <div class="balance-card">
+                    <h4>الرصيد بالدولار</h4>
+                    <p id="bal-usd">$ 1,250.00</p>
+                </div>
+                <div class="balance-card">
+                    <h4>الرصيد بالتركي</h4>
+                    <p id="bal-try">₺ 34,000.00</p>
+                </div>
+                <div class="balance-card">
+                    <h4>الرصيد باليورو</h4>
+                    <p id="bal-eur">€ 1,150.00</p>
+                </div>
+            </div>
+
+            <!-- Quick Action Buttons -->
+            <div class="quick-actions">
+                <button class="btn-action btn-send" onclick="openModal('sendModal')">📤 إرسال</button>
+                <button class="btn-action btn-receive" onclick="openModal('receiveModal')">📥 استقبال</button>
+            </div>
+
+            <!-- Transactions History -->
+            <div class="history-section">
+                <div class="history-title">سجل الحوالات (اضغط مطولاً 3 ثوانٍ للتفاصيل)</div>
+                <div id="txList">
+                    <!-- Transactions dynamic insertion -->
+                </div>
+                <div class="tx-bottom-btns">
+                    <button class="btn-small" onclick="openModal('sendModal')">إرسال جديد</button>
+                    <button class="btn-small" onclick="alert('تمت الإضافة للمفضلة بنجاح')">إضافة للمفضلة ⭐</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- View 2: Transactions View -->
+        <div id="tab-tx" class="view-section">
+            <h3>كشف المعاملات الكامل</h3>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:15px;">استعراض كامل السجل المالي والحوالات</p>
+            <div id="txListFull"></div>
+        </div>
+
+        <!-- View 3: Currency Exchange View -->
+        <div id="tab-exchange" class="view-section">
+            <h3>تحويل العملات</h3>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:15px;">سعر الصرف مباشر بحسب تحديثات الإدارة</p>
+            
+            <div class="input-group">
+                <label>من عملة:</label>
+                <select id="exFrom" onchange="calcExchange()">
+                    <option value="USD">دولار أمريكي (USD)</option>
+                    <option value="TRY">ليرة تركية (TRY)</option>
+                    <option value="EUR">يورو (EUR)</option>
+                    <option value="SYP">ليرة سورية (SYP)</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>إلى عملة:</label>
+                <select id="exTo" onchange="calcExchange()">
+                    <option value="SYP">ليرة سورية (SYP)</option>
+                    <option value="USD">دولار أمريكي (USD)</option>
+                    <option value="TRY">ليرة تركية (TRY)</option>
+                    <option value="EUR">يورو (EUR)</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>المبلغ:</label>
+                <input type="number" id="exAmount" value="100" oninput="calcExchange()">
+            </div>
+
+            <div style="background:rgba(0,0,0,0.2); padding:15px; border-radius:12px; text-align:center; margin-top:15px;">
+                <span style="font-size:12px; color:var(--text-muted);">النتيجة التقديرية:</span>
+                <h2 id="exResult" style="color:var(--gold); margin-top:5px;">0.00</h2>
+            </div>
+            <button class="btn-action btn-send" style="width:100%; margin-top:15px;" onclick="executeExchange()">تأكيد التحويل الآن</button>
+        </div>
+
+        <!-- View 4: My Account View -->
+        <div id="tab-account" class="view-section">
+            <div class="profile-header">
+                <div class="profile-img-container">
+                    <img src="https://via.placeholder.com/150/059669/FFFFFF?text=User" alt="Avatar" class="profile-img" id="userAvatar">
+                </div>
+                <h4 id="accountNameDisplay">أحمد خالد</h4>
+                <p style="font-size:11px; color:var(--text-muted);">رقم الحساب الخاص: <b id="privateAccNum">PRIV-9988-7711</b></p>
+                <p style="font-size:11px; color:var(--gold);">رقم الحساب العام: <b id="publicAccNum">ACC-10293847</b></p>
+            </div>
+
+            <div class="account-menu-item" onclick="openModal('infoModal')">
+                <span>📋 معلومات الحساب الشخصية</span>
+                <span>‹</span>
+            </div>
+
+            <div class="account-menu-item" onclick="openModal('securityModal')">
+                <span>🔒 إعدادات الأمان (بصمة / PIN / وجه)</span>
+                <span>‹</span>
+            </div>
+
+            <div class="account-menu-item" onclick="openModal('transferSettingsModal')">
+                <span>⚙️ إعدادات التحويل</span>
+                <span>‹</span>
+            </div>
+
+            <div class="account-menu-item" onclick="openModal('supportModal')">
+                <span>💬 خدمة العملاء والتواصل المباشر</span>
+                <span>‹</span>
+            </div>
+
+            <div class="account-menu-item">
+                <span>🌐 اللغة المختارة</span>
+                <select id="langSelect" style="background:none; border:none; color:var(--gold);" onchange="changeLanguage()">
+                    <option value="ar">العربية</option>
+                    <option value="tr">Türkçe</option>
+                    <option value="en">English</option>
+                    <option value="de">Deutsch</option>
+                </select>
+            </div>
+
+            <div class="account-menu-item">
+                <span>🎨 المظهر (الثيم الداكن / الفاتح)</span>
+                <label class="switch">
+                    <input type="checkbox" id="themeToggle" onchange="toggleTheme()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="account-menu-item" style="color:var(--danger);" onclick="deactivateAccount()">
+                <span>⚠️ تعطيل الحساب</span>
+                <span>‹</span>
+            </div>
+
+            <div class="account-menu-item">
+                <span>ℹ️ رقم الإصدار</span>
+                <span style="color:var(--text-muted);">v2.4.0 Pro</span>
+            </div>
+
+            <div class="account-menu-item" style="color:var(--danger);" onclick="logoutConfirm()">
+                <span>🚪 تسجيل الخروج</span>
+                <span>‹</span>
+            </div>
+        </div>
+
+        <!-- Rights Reserved Footer -->
+        <div class="footer-rights">
+            جميع الحقوق محفوظة لدى محفظة الأسد © 2026
+        </div>
+
+        <!-- Bottom Navigation Bar -->
+        <div class="bottom-nav">
+            <button class="nav-item active" onclick="switchTab('tab-home', this)">
+                <span>🏠</span> الرئيسية
+            </button>
+            <button class="nav-item" onclick="switchTab('tab-tx', this)">
+                <span>📜</span> المعاملات
+            </button>
+            
+            <!-- Middle Scanner Button -->
+            <div class="scanner-btn" onclick="openModal('scannerModal')" title="مسح باركود المستلم">
+                📷
+            </div>
+
+            <button class="nav-item" onclick="switchTab('tab-exchange', this)">
+                <span>💱</span> تحويل
+            </button>
+            <button class="nav-item" onclick="switchTab('tab-account', this)">
+                <span>👤</span> حسابي
+            </button>
+        </div>
+    </div>
+
+    <!-- ADMIN PANEL CONTROL VIEW (MOCKED IN-APP CONTROLLER) -->
+    <div id="adminControlView" class="view-section" style="background: #020617;">
+        <h2 style="color:#38bdf8; margin-bottom:10px;">لوحة التحكم الشاملة 🛠️</h2>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:15px;">التحكم بجميع ميزات التطبيق، الأسعار، وإصلاح الأخطاء مباشرة</p>
+
+        <!-- Exchange Rates Control -->
+        <div class="admin-card">
+            <h4>تعديل أسعار الصرف للعملات (تنعكس فوراً):</h4>
+            <div class="input-group" style="margin-top:8px;">
+                <label>1 دولار مقابل ليرة سورية:</label>
+                <input type="number" id="rateUsdSyp" value="15000" onchange="updateRatesFromAdmin()">
+            </div>
+            <div class="input-group">
+                <label>1 دولار مقابل ليرة تركية:</label>
+                <input type="number" id="rateUsdTry" value="34" onchange="updateRatesFromAdmin()">
+            </div>
+            <div class="input-group">
+                <label>1 يورو مقابل دولار:</label>
+                <input type="number" id="rateEurUsd" value="1.08" onchange="updateRatesFromAdmin()">
+            </div>
+        </div>
+
+        <!-- User Balance Override -->
+        <div class="admin-card">
+            <h4>تعديل بيانات ورصيد المستخدم:</h4>
+            <div class="input-group" style="margin-top:8px;">
+                <label>اسم المستخدم:</label>
+                <input type="text" id="adminUserName" value="أحمد خالد" onchange="updateUserDataFromAdmin()">
+            </div>
+            <div class="input-group">
+                <label>الرصيد بالسوري:</label>
+                <input type="number" id="adminBalSyp" value="15000000" onchange="updateUserDataFromAdmin()">
+            </div>
+            <div class="input-group">
+                <label>الرصيد بالدولار:</label>
+                <input type="number" id="adminBalUsd" value="1250" onchange="updateUserDataFromAdmin()">
+            </div>
+        </div>
+
+        <!-- Support Live Reply Desk -->
+        <div class="admin-card">
+            <h4>رد خدمة العملاء (إرسال إشعار صوتي منبثق):</h4>
+            <div class="input-group" style="margin-top:8px;">
+                <label>نص الرد للمستخدم:</label>
+                <textarea id="adminReplyText" rows="2" placeholder="اكتب رد الإدارة هنا..."></textarea>
+            </div>
+            <button class="btn-action btn-send" style="width:100%;" onclick="sendAdminReply()">إرسال الرد والإشعار المنبثق 🔔</button>
+        </div>
+
+        <div class="admin-card">
+            <h4>معالجة الأخطاء وإصلاح النظام:</h4>
+            <button class="btn-action" style="background:#dc2626; width:100%;" onclick="alert('تم إعادة ضبط النظام وتصليح جميع سجلات الحوالات المعلقة بنجاح!')">إصلاح سجل الحوالات وإعادة المزامنة 🔄</button>
+        </div>
+    </div>
+
+    <!-- MODALS SECTION -->
+
+    <!-- Send Modal -->
+    <div id="sendModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('sendModal')">✕</button>
+            <h3>إرسال حوالة جديد</h3>
+            <div class="input-group" style="margin-top:15px;">
+                <label>رقم حساب المستلم:</label>
+                <input type="text" id="sendAccNum" placeholder="مثال: ACC-992211">
+            </div>
+            <div class="input-group">
+                <label>المبلغ والعملة:</label>
+                <input type="number" placeholder="المبلغ">
+            </div>
+            <div class="input-group">
+                <label>ملاحظات الحوالة:</label>
+                <textarea placeholder="أكتب أي ملاحظات..." rows="2"></textarea>
+            </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <span style="font-size:12px; color:var(--text-muted);">زر إخفاء هوية المرسل:</span>
+                <label class="switch">
+                    <input type="checkbox" id="hideIdentityToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <button class="btn-action btn-send" style="width:100%;" onclick="submitSendTx()">تأكيد الإرسال 🚀</button>
+        </div>
+    </div>
+
+    <!-- Receive Modal -->
+    <div id="receiveModal" class="modal">
+        <div class="modal-content" style="text-align:center;">
+            <button class="modal-close" onclick="closeModal('receiveModal')">✕</button>
+            <h3>استقبال أموال</h3>
+            <div class="qr-placeholder">
+                [ رمز QR للحساب ]<br>
+                📷 SCAN ME
+            </div>
+            <p style="font-size:12px; color:var(--text-muted);">رقم الحساب العام للاستقبال:</p>
+            <h3 style="color:var(--gold); margin:5px 0;" id="copyAccNumDisplay">ACC-10293847</h3>
+            <button class="btn-small" style="width:100%; margin-top:10px; background:var(--accent); color:white;" onclick="copyAccountNum()">📋 نسخ رقم الحساب</button>
+        </div>
+    </div>
+
+    <!-- Long Press Receipt Modal (3s Trigger) -->
+    <div id="receiptModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('receiptModal')">✕</button>
+            <h3 style="text-align:center; color:var(--gold);">تفاصيل إشعار الحوالة 🧾</h3>
+            <hr style="border-color:var(--border); margin:10px 0;">
+            <div style="font-size:13px; line-height:1.8;">
+                <p><b>اسم المرسل:</b> <span id="recSender">محمد العلي</span></p>
+                <p><b>رمز المعاملة:</b> <span id="recTxCode">TX-9988221100</span></p>
+                <p><b>اسم المستلم:</b> <span id="recRecipient">أحمد خالد</span></p>
+                <p><b>الكمية المحولة:</b> <span id="recAmount" style="color:var(--accent); font-weight:bold;">$ 250.00 USD</span></p>
+                <p><b>توقيت التحويل:</b> <span id="recTime">2026-10-08 12:45 PM</span></p>
+            </div>
+            <button class="btn-action btn-send" style="width:100%; margin-top:15px;" onclick="closeModal('receiptModal')">إغلاق الإشعار</button>
+        </div>
+    </div>
+
+    <!-- Scanner Popup Modal -->
+    <div id="scannerModal" class="modal">
+        <div class="modal-content" style="text-align:center;">
+            <button class="modal-close" onclick="closeModal('scannerModal')">✕</button>
+            <h3>كاميرا مسح الباركود</h3>
+            <div style="width:100%; height:180px; background:#000; margin:15px 0; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#0f0;">
+                [ جاري تشغيل الكاميرا للمسح... ]
+            </div>
+            <button class="btn-action btn-send" style="width:100%;" onclick="simulateScan()">تحويل لحساب المستلم الممسوح ⚡</button>
+        </div>
+    </div>
+
+    <!-- Info Modal -->
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('infoModal')">✕</button>
+            <h3>معلومات الحساب الشخصية</h3>
+            <div style="font-size:13px; line-height:2; margin-top:10px;">
+                <p><b>الاسم الكامل:</b> أحمد خالد</p>
+                <p><b>البريد الإلكتروني:</b> ahmad.kaled@example.com</p>
+                <p><b>كلمة السر:</b> ************</p>
+                <p><b>المنطقة / المدينة:</b> سوريا - دمشق</p>
+                <p><b>رقم الهاتف:</b> +963 912 345 678</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Settings Modal -->
+    <div id="securityModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('securityModal')">✕</button>
+            <h3>إعدادات الأمان الحيوية</h3>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; margin:15px 0;">
+                <span>وضع بصمة الأصبع:</span>
+                <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin:15px 0;">
+                <span>وضع رمز PIN:</span>
+                <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin:15px 0;">
+                <span>تغيير رمز PIN:</span>
+                <button class="btn-small" onclick="alert('تم تغيير رمز الـ PIN بنجاح')">تحديث</button>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin:15px 0;">
+                <span>إضافة بصمة الوجه (Face ID):</span>
+                <label class="switch"><input type="checkbox"><span class="slider"></span></label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transfer Settings Modal -->
+    <div id="transferSettingsModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('transferSettingsModal')">✕</button>
+            <h3>إعدادات التحويل</h3>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; margin:12px 0;">
+                <span>إظهار رسالة تأكيد قبل الإرسال:</span>
+                <select style="padding:4px; border-radius:6px; background:var(--bg-card); color:var(--text);"><option>نعم</option><option>لا</option></select>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin:12px 0;">
+                <span>السماح بمشاركة حسابك مع الآخرين:</span>
+                <select style="padding:4px; border-radius:6px; background:var(--bg-card); color:var(--text);"><option>نعم</option><option>لا</option></select>
+            </div>
+            <div class="input-group">
+                <label>العملة الافتراضية:</label>
+                <select>
+                    <option>دولار (USD)</option>
+                    <option>ليرة سورية (SYP)</option>
+                    <option>ليرة تركية (TRY)</option>
+                    <option>يورو (EUR)</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>رمز تحويل الحساب الخاص:</label>
+                <input type="password" value="1234">
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Support Modal -->
+    <div id="supportModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('supportModal')">✕</button>
+            <h3>خدمة العملاء المباشرة</h3>
+            <div id="supportChatBox" style="height:150px; background:rgba(0,0,0,0.2); border-radius:10px; padding:10px; overflow-y:auto; margin:10px 0; font-size:12px;">
+                <div style="color:var(--text-muted);">مرحباً بك! كيف يمكننا مساعدتك اليوم؟</div>
+            </div>
+            <div style="display:flex; gap:5px;">
+                <input type="text" id="userSupportInput" placeholder="اكتب رسالتك للإدارة..." style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:white;">
+                <button class="btn-small" style="background:var(--accent); color:white;" onclick="sendUserSupportMsg()">إرسال</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Notification Dynamic Banner Popup -->
+    <div id="adminNotificationPopup" class="modal">
+        <div class="modal-content" style="border: 2px solid var(--gold);">
+            <h3 style="color:var(--gold);">🔔 إشعار جديد من الإدارة</h3>
+            <p id="adminNotificationText" style="margin:15px 0; font-size:14px;"></p>
+            <button class="btn-action btn-send" style="width:100%;" onclick="closeModal('adminNotificationPopup')">فهمت ذلك</button>
+        </div>
+    </div>
+
+</div>
+
 <script>
-const CUR={USD:{s:'$',n:'دولار'},EUR:{s:'€',n:'يورو'},SYP:{s:'ل.س',n:'ليرة سورية'}};
-const RATES={USD:1,EUR:0.92,SYP:13900};
-const DEF={cur:'USD',hide:false,tab:'home',theme:'auto',loggedIn:false,acct:null,me:{name:'',user:'',id:'',email:'',phone:'',avatar:'',addr:''},
-bal:{USD:0,EUR:0,SYP:0},
-tx:[],
-fav:[],set:{confirm:true,share:false,limit:{USD:0,EUR:0,SYP:0},pin:'',pinOn:false,tpin:'',tpinOn:false,defCur:'USD'}};
-let S;
-try{S=Object.assign({},DEF,JSON.parse(localStorage.getItem('wallet')||'{}'))}catch(e){S=structuredClone(DEF)}
-const save=()=>{try{localStorage.setItem('wallet',JSON.stringify(S))}catch(e){}};
-const $=id=>document.getElementById(id);
-const fee=(m,k)=>+(m*(+((getAdm().comm||{})[k])||0)/100).toFixed(2);
-const fmt=(v,c)=>(Math.abs(v)%1?Math.abs(v).toFixed(2):Math.abs(v))+' '+CUR[c].s;
-const toast=m=>{const t=$('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',2200)};
-const applyTheme=()=>{if(S.theme==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.dataset.theme=S.theme;applyAdmin()};
-const ADM_DEF={colors:{},rates:null,support:{text:'للتواصل مع خدمة العملاء',phone:'',wa:''},version:'1.0.0',appName:'المحفظة'};
-function getAdm(){try{return Object.assign({},ADM_DEF,JSON.parse(localStorage.getItem('wallet_admin')||'{}'))}catch(e){return ADM_DEF}}
-function applyAdmin(){const a=getAdm();const r=document.documentElement.style;
-['bg','card','card2','tx','mut','ac','in','out','nav'].forEach(k=>{if(a.colors&&a.colors[k])r.setProperty('--'+k,a.colors[k]);else r.removeProperty('--'+k)});
-if(a.rates)Object.keys(a.rates).forEach(k=>{if(+a.rates[k]>0)RATES[k]=+a.rates[k]});
-if(a.cur)Object.keys(a.cur).forEach(k=>CUR[k]&&Object.assign(CUR[k],a.cur[k]));document.title=a.appName||'المحفظة'}
-// تحديث مباشر: أي تغيير من لوحة الإدارة ينعكس فورا
-window.addEventListener('storage',e=>{
-if(e.key==='wallet'){try{const n=JSON.parse(e.newValue||'{}');if(!n.me){localStorage.removeItem('wallet');location.reload();return}Object.assign(S,n);if(S.acct&&S.acct.frozen){S.loggedIn=false;save();location.reload();return}applyTheme();if(!$('lockPin'))render()}catch(_){}}
-else if(e.key==='wallet_admin'){applyAdmin();if(!$('lockPin'))render()}});
-function sheet(h){$('sheetBody').innerHTML=h;$('sheet').classList.add('show')}
-function closeSheet(){$('sheet').classList.remove('show');stopScanCam()}$('sheet').onclick=e=>{if(e.target.id==='sheet')closeSheet()};
-const TABS=[['home','🏠','الرئيسية'],['tx','💱','التحويلات'],['cv','🔄','تحويل عملة'],['scan','<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 2px"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="8" y="8" width="8" height="8" rx="1"/></svg>','مسح QR'],['me','👤','حسابي']];
-function nav(){ $('nav').innerHTML=TABS.map(t=>b(t)).join('');}
-const b=t=>`<button class="${S.tab===t[0]?'on':''}" onclick="go('${t[0]}')"><i>${t[1]}</i>${t[2]}</button>`;
-function go(t){if(t==='scan'){scan();return}if(t==='cv'){convert();return}S.tab=t;save();render()}
-function toggleHide(){
-if(!S.hide){S.hide=true;save();render();return}
-if(S.set.pinOn&&S.set.pin){
-sheet(`<h2 style="margin-top:0">أدخل رمز PIN</h2><p style="color:var(--mut)">لإظهار الرصيد وسجل التحويلات</p><input id="hidePin" type="password" inputmode="numeric" maxlength="4" pattern="\\d*" style="text-align:center;font-size:1.4rem;letter-spacing:8px" autofocus><button class="btn" style="margin-top:12px" onclick="checkHidePin()">تأكيد</button>`);
-}else{S.hide=false;save();render()}
-}
-function checkHidePin(){const v=$('hidePin').value.trim();if(v!==S.set.pin)return toast('رمز غير صحيح');S.hide=false;save();closeSheet();render()}
-function txRow(t){return `<div class="tx" style="cursor:pointer" onclick="txDetail('${t.id}')"><div>${t.n}<small>#${t.id} · ${t.d}</small>${t.note?`<small>${t.note}</small>`:''}</div><span class="${t.a>0?'pos':'neg'}">${t.a>0?'+':'−'}${fmt(t.a,t.c)}</span></div>`}
-function txDetail(id){const t=S.tx.find(x=>x.id===id);if(!t)return;
-const dir=t.a>0?'وارد من':'صادر إلى';
-sheet(`<h2 style="margin-top:0">تفاصيل العملية</h2>
-<div class="tx" style="margin-bottom:14px"><div style="text-align:center;width:100%"><b style="font-size:1.3rem" class="${t.a>0?'pos':'neg'}">${t.a>0?'+':'−'}${fmt(t.a,t.c)}</b></div></div>
-<div class="set"><span>رقم العملية</span><span dir="ltr">#${t.id}</span></div>
-<div class="set"><span>${dir}</span><span>${t.n}</span></div>
-${t.addr?`<div class="set"><span>عنوان الحساب</span><span class="addr" style="font-size:.8rem">${t.addr}</span></div>`:''}
-<div class="set"><span>التاريخ والوقت</span><span dir="ltr">${t.d}</span></div>
-<div class="set"><span>العملة</span><span>${CUR[t.c].n} (${t.c})</span></div>
-${t.note?`<div class="set"><span>ملاحظة</span><span>${t.note}</span></div>`:''}
-<div class="set"><span>الحالة</span><span style="color:var(--in)">مكتملة ✔</span></div>`)}
-const views={
-home(){return `<div class="row sp"><span>👋 أهلاً</span>${S.set.tpinOn?'<span class="chip" style="background:var(--card2)">🔒 رمز أمان مفعّل</span>':''}</div>
-<div class="card bal" style="margin-top:12px"><div class="row sp"><b>${S.hide?'••••••':S.bal[S.cur].toFixed(2)}</b><button class="chip" onclick="toggleHide()">${S.hide?'إظهار':'إخفاء'}</button></div>
-${S.hide?'':`<div class="cur">${Object.keys(CUR).map(c=>`<button class="${c===S.cur?'on':''}" onclick="S.cur='${c}';save();render()">${c}</button>`).join('')}</div>`}</div>
-<div class="acts"><button class="big in" onclick="receive()">استقبال ↙</button><button class="big out" onclick="send()">إرسال ↗</button></div>
+    // --- APP STATE & ADMIN CONFIG ---
+    let rates = { USD_SYP: 15000, USD_TRY: 34, EUR_USD: 1.08 };
+    let transactions = [
+        { sender: "خالد المحمد", txCode: "TX-991823", recipient: "أحمد خالد", amount: "$ 150.00 USD", time: "2026-10-08 10:15 AM" },
+        { sender: "أحمد خالد", txCode: "TX-883102", recipient: "سامر العلي", amount: "₺ 2,500.00 TRY", time: "2026-10-07 04:30 PM" },
+        { sender: "شركة السلام", txCode: "TX-774912", recipient: "أحمد خالد", amount: "5,000,000 SYP", time: "2026-10-06 09:00 AM" }
+    ];
 
-<h2>آخر التحويلات</h2>${S.hide?'<div class="empty">🔒 الرصيد والتحويلات مخفية</div>':(S.tx.slice(0,4).map(txRow).join('')||'<div class="empty">لا توجد تحويلات بعد</div>')}`},
-tx(){return `<h2>آخر التحويلات</h2><button class="chip" onclick="report()" style="margin-bottom:12px">متقدم: تقرير</button>${S.hide?'<div class="empty">🔒 سجل التحويلات مخفي. اضغط إظهار من الرئيسية</div>':(S.tx.map(txRow).join('')||'<div class="empty">لا توجد تحويلات بعد</div>')}`},
-me(){const row=(l,f)=>`<button class="set" onclick="${f}"><span>${l}</span><span>‹</span></button>`;
-return `<div class="av" style="background-size:cover;background-position:center;cursor:pointer;${S.me.avatar?`background-image:url('${S.me.avatar}')`:''}" onclick="info()">${S.me.avatar?'':'👤'}</div><div style="text-align:center;font-weight:700">${S.me.name} ✔</div><div class="addr" style="margin-bottom:2px">رقم الحساب: ${S.me.id}</div><div class="addr" style="margin-bottom:14px">${S.me.email}</div>
-${row('معلومات الحساب','info()')}${row('إعدادات التحويل','tset()')}${row('إعدادات الأمان','sec()')}${row('الأجهزة المرتبطة','dev()')}
-<div class="set"><span>الثيم</span><span><button class="chip" onclick="S.theme='auto';save();applyTheme();render()">تلقائي</button> <button class="chip" onclick="S.theme='light';save();applyTheme();render()">فاتح</button> <button class="chip" onclick="S.theme='dark';save();applyTheme();render()">داكن</button></span></div>
-${row('خدمة العملاء',"support()")}<div class="set"><span>رقم الإصدار</span><span dir="ltr">v${getAdm().version}</span></div>
-<button class="set" style="color:var(--out)" onclick="logout()"><span>تسجيل الخروج</span><span>⎋</span></button>`}};
-function support(){const a=getAdm().support||{};sheet(`<h2 style="margin-top:0">خدمة العملاء</h2><p style="color:var(--mut);margin-bottom:12px">${a.text||''}</p>${a.phone?`<a class="btn" style="display:block;text-align:center;text-decoration:none;margin-bottom:8px" href="tel:${a.phone}">اتصال: <span dir="ltr">${a.phone}</span></a>`:''}${a.wa?`<a class="btn" style="display:block;text-align:center;text-decoration:none;margin-bottom:8px" href="https://wa.me/${a.wa}">واتساب</a>`:''}<h2>أرسل رسالة</h2><textarea id="supMsg" rows="3" style="width:100%;background:var(--card);color:var(--tx);border:1px solid var(--card2);border-radius:12px;padding:10px;font:inherit"></textarea><button class="btn" style="margin-top:10px" onclick="sendSupport()">إرسال</button>`)}
-function sendSupport(){const m=$('supMsg').value.trim();if(!m)return toast('اكتب رسالتك');let q=[];try{q=JSON.parse(localStorage.getItem('wallet_support')||'[]')}catch(e){}q.unshift({id:String(Math.floor(Math.random()*9e4+1e4)),from:S.me.name,msg:m,d:new Date().toLocaleString('en-GB'),read:false});localStorage.setItem('wallet_support',JSON.stringify(q));closeSheet();toast('تم إرسال رسالتك')}
-function logout(){if(!confirm('تسجيل الخروج؟'))return;S.loggedIn=false;save();location.reload()}
-function render(){nav();$('app').innerHTML=views[S.tab]()}
-function qrSvg(seed){let h=0;for(const c of seed)h=(h*31+c.charCodeAt(0))|0;const n=25;let r='';const f=(x,y)=>(x<8&&y<8)||(x>n-9&&y<8)||(x<8&&y>n-9);
-for(let y=0;y<n;y++)for(let x=0;x<n;x++){let on;if(f(x,y)){const lx=x<8?x:x-(n-8),ly=y<8?y:y-(n-8);on=(lx===0||lx===6||ly===0||ly===6||(lx>=2&&lx<=4&&ly>=2&&ly<=4))&&lx<7&&ly<7}else{h=(h*1103515245+12345)|0;on=(h>>>16)&1}
-if(on)r+=`<rect x="${x}" y="${y}" width="1" height="1"/>`}
-return `<svg viewBox="0 0 ${n} ${n}" fill="#1b2a6b">${r}</svg>`}
-function receive(){sheet(`<h2 style="margin-top:0">استقبال</h2><div class="qr">${qrSvg(S.me.addr)}</div><div class="addr">${S.me.addr}</div><div class="row" style="justify-content:center;margin-top:14px"><button class="chip" onclick="navigator.clipboard&&navigator.clipboard.writeText(S.me.addr);toast('تم النسخ')">نسخ</button><button class="chip" onclick="navigator.share?navigator.share({text:S.me.addr}):toast('المشاركة غير مدعومة')">مشاركة</button></div><p style="color:var(--mut);font-size:.8rem;text-align:center;margin-top:12px">رمز تجريبي للعرض فقط وليس QR حقيقياً</p>`)}
-function send(){sheet(`<h2 style="margin-top:0">إرسال</h2><label>عنوان المستلم</label><input id="sa" placeholder="الصق العنوان" dir="ltr"><label>المبلغ</label><input id="sm" type="number" inputmode="decimal" min="0" step="0.01"><label>العملة</label><select id="sc">${Object.keys(CUR).map(c=>`<option ${c===S.cur?'selected':''}>${c}</option>`).join('')}</select><label>ملاحظة (اختياري)</label><input id="sn"><button class="btn" onclick="doSend()">إرسال</button>`)}
-function doSend(){const a=$('sa').value.trim(),m=parseFloat($('sm').value),c=$('sc').value,n=$('sn').value.trim();
-if(!a)return toast('أدخل عنوان المستلم');if(!(m>0))return toast('أدخل مبلغاً صحيحاً');const fe=fee(m,'send');if(m+fe>S.bal[c])return toast('الرصيد غير كافٍ (شامل العمولة)');
-window._pendingSend={a,m,c,n,fe};
-const ok=()=>askTpin(doSendFinal);
-if(S.set.confirm){sheet(`<h2 style="margin-top:0">تأكيد الإرسال</h2><p>إرسال ${fmt(m,c)}${fe?` + عمولة ${fmt(fe,c)}`:''} إلى<br><span class="addr">${a}</span></p><br><button class="btn" id="okb">تأكيد</button>`);$('okb').onclick=ok}else ok()}
-function doSendFinal(){const {a,m,c,n,fe=0}=window._pendingSend;S.bal[c]=+(S.bal[c]-m-fe).toFixed(2);const d=new Date(),p=x=>String(x).padStart(2,'0');S.tx.unshift({id:String(Math.floor(Math.random()*9e4+1e4)),n:a.slice(0,10)+'…',addr:a,d:`${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`,a:-(m+fe),c,note:n,fee:fe});save();closeSheet();render();toast('تم الإرسال')}
-function askTpin(nextFn){if(!S.set.tpinOn||!S.set.tpin)return nextFn();window._tpinNext=nextFn;sheet(`<h2 style="margin-top:0">رمز الأمان</h2><label>أدخل رمز الأمان لتأكيد التحويل</label><input id="txp" type="password" inputmode="numeric" maxlength="4" pattern="\\d*"><button class="btn" onclick="checkTpin()">تأكيد</button>`)}
-function checkTpin(){const v=$('txp').value.trim();if(v!==S.set.tpin)return toast('رمز غير صحيح');const fn=window._tpinNext;window._tpinNext=null;fn()}
-function scan(){sheet(`<h2 style="margin-top:0">مسح رمز QR</h2><p style="color:var(--mut)" id="scanMsg">قم بمحاذاة الرمز مع الإطار</p><div style="border:3px solid var(--ac);border-radius:18px;height:240px;margin:14px 0;overflow:hidden;position:relative;background:#000"><video id="scanVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover"></video></div><button class="btn" onclick="closeSheet();send()">إدخال العنوان يدوياً</button>`);
-startScanCam()}
-function startScanCam(){
-if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$('scanMsg').textContent='تشغيل الكاميرا غير مدعوم على هذا المتصفح';return}
-navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(stream=>{
-window._scanStream=stream;const v=$('scanVideo');if(v)v.srcObject=stream;
-}).catch(()=>{const m=$('scanMsg');if(m)m.textContent='تعذّر فتح الكاميرا. تأكد من منح الإذن للموقع'});
-}
-function stopScanCam(){if(window._scanStream){window._scanStream.getTracks().forEach(t=>t.stop());window._scanStream=null}}
-function report(){sheet(`<h2 style="margin-top:0">توليد تقرير</h2><label>من تاريخ</label><input type="date"><label>إلى تاريخ</label><input type="date"><label>العملة</label><select><option>الكل</option>${Object.keys(CUR).map(c=>`<option>${c}</option>`).join('')}</select><button class="btn" onclick="closeSheet();toast('سيتم تفعيل التقارير لاحقاً')">توليد تقرير</button>`)}
-function convert(){sheet(`<h2 style="margin-top:0">تحويل بين العملات</h2>
-<label>من</label><select id="cfrom" onchange="updateConvertPreview()">${Object.keys(CUR).map(c=>`<option value="${c}" ${c===S.cur?'selected':''}>${CUR[c].n} (${c}) — الرصيد: ${fmt(S.bal[c],c)}</option>`).join('')}</select>
-<label>إلى</label><select id="cto" onchange="updateConvertPreview()">${Object.keys(CUR).map(c=>`<option value="${c}" ${c!==S.cur?'selected':''}>${CUR[c].n} (${c})</option>`).join('')}</select>
-<label>المبلغ</label><input id="camt" type="number" inputmode="decimal" min="0" step="0.01" oninput="updateConvertPreview()">
-<p id="cprev" style="color:var(--mut);text-align:center;margin:8px 0 4px"></p>
-<button class="btn" onclick="doConvert()">تحويل</button>`);updateConvertPreview()}
-function updateConvertPreview(){const f=$('cfrom').value,t=$('cto').value,m=parseFloat($('camt').value)\vert{}\vert{}0;if(f===t){$('cprev').textContent='اختر عملتين مختلفتين';return}const res=(m-fee(m,'cv'))/RATES[f]*RATES[t];$('cprev').textContent=`${fmt(m,f)} = ${fmt(res,t)} (سعر الصرف)${fee(m,'cv')?' · عمولة '+fmt(fee(m,'cv'),f):''}`}
-function doConvert(){const f=$('cfrom').value,t=$('cto').value,m=parseFloat($('camt').value);
-if(f===t)return toast('اختر عملتين مختلفتين');if(!(m>0))return toast('أدخل مبلغاً صحيحاً');if(m>S.bal[f])return toast('الرصيد غير كافٍ');
-const run=()=>{const fe=fee(m,'cv'),res=(m-fe)/RATES[f]*RATES[t];S.bal[f]=+(S.bal[f]-m).toFixed(2);S.bal[t]=+(S.bal[t]+res).toFixed(2);const d=new Date(),p=x=>String(x).padStart(2,'0'),ds=`${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
-S.tx.unshift({id:String(Math.floor(Math.random()*9e4+1e4)),n:`تحويل عملة إلى ${t}`,d:ds,a:-m,c:f,fee:fe});
-S.tx.unshift({id:String(Math.floor(Math.random()*9e4+1e4)),n:`تحويل عملة من ${f}`,d:ds,a:res,c:t});
-save();closeSheet();render();toast('تم التحويل بين العملات')};
-askTpin(run)}
-function info(){sheet(`<h2 style="margin-top:0">معلومات الحساب</h2>
-<div class="av" id="avPrev" style="background-size:cover;background-position:center;${S.me.avatar?`background-image:url('${S.me.avatar}')`:''}">${S.me.avatar?'':'👤'}</div>
-<div class="row" style="justify-content:center;margin-bottom:10px"><input type="file" id="avFile" accept="image/*" style="display:none" onchange="onAvatarPick(event)"><button class="chip" onclick="$('avFile').click()">تغيير الصورة الشخصية</button>${S.me.avatar?`<button class="chip" onclick="S.me.avatar='';save();closeSheet();info()">حذف الصورة</button>`:''}</div>
-<label>رقم الحساب</label><input value="${S.me.id}" dir="ltr" disabled>
-<label>الاسم</label><input id="nm" value="${S.me.name}">
-<label>البريد الإلكتروني</label><input id="nem" type="email" value="${S.me.email||''}" dir="ltr">
-<label>رقم الهاتف</label><input id="nph" type="tel" value="${S.me.phone||''}" dir="ltr">
-<button class="btn" onclick="S.me.name=$('nm').value||S.me.name;S.me.email=$('nem').value||S.me.email;S.me.phone=$('nph').value||S.me.phone;save();closeSheet();render();toast('تم الحفظ')">حفظ</button>
-<button class="btn" style="background:var(--card2);color:var(--tx);margin-top:10px" onclick="closeSheet();sec()">تغيير كلمة المرور</button>`)}
-function onAvatarPick(e){const f=e.target.files&&e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{S.me.avatar=r.result;save();closeSheet();info()};r.readAsDataURL(f)}
-function tset(){const t=(l,k)=>`<button class="set" onclick="S.set.${k}=!S.set.${k};save();tset()"><span>${l}</span><b>${S.set[k]?'نعم':'لا'}</b></button>`;
-sheet(`<h2 style="margin-top:0">إعدادات التحويل</h2>
-<label>العملة الافتراضية</label>
-<select id="defc" onchange="S.set.defCur=this.value;S.cur=this.value;save();render();tset()">${Object.keys(CUR).map(c=>`<option value="${c}" ${c===S.set.defCur?'selected':''}>${CUR[c].n} (${c})</option>`).join('')}</select>
-${t('إظهار رسالة تأكيد عند الإرسال','confirm')}${t('السماح بمشاركة حسابك من قبل الآخرين','share')}
-<div class="set"><span>طلب رمز أمان عند التحويل</span><b>${S.set.tpinOn?'مفعّل':'غير مفعّل'}</b></div>
-<button class="btn" style="margin-top:10px" onclick="${S.set.tpinOn?'disableTpin()':'setupTpin()'}">${S.set.tpinOn?'إلغاء تفعيل رمز الأمان':(S.set.tpin?'تفعيل رمز الأمان':'إنشاء رمز أمان للتحويل')}</button>
-${S.set.tpin?`<button class="btn" style="background:var(--card2);color:var(--tx);margin-top:10px" onclick="setupTpin(true)">تغيير رمز الأمان</button>`:''}
-<br><button class="btn" style="margin-top:14px" onclick="closeSheet();convert()">تحويل بين العملات</button>`)}
-function setupTpin(change){sheet(`<h2 style="margin-top:0">${change?'تغيير رمز الأمان':'إنشاء رمز أمان للتحويل'}</h2><label>أدخل رمزاً مكوّناً من 4 أرقام</label><input id="tp1" type="password" inputmode="numeric" maxlength="4" pattern="\\d*"><label>تأكيد الرمز</label><input id="tp2" type="password" inputmode="numeric" maxlength="4" pattern="\\d*"><button class="btn" onclick="saveTpin()">حفظ</button>`)}
-function saveTpin(){const a=$('tp1').value.trim(),b=$('tp2').value.trim();if(!/^\d{4}$/.test(a))return toast('أدخل 4 أرقام');if(a!==b)return toast('الرمزان غير متطابقين');S.set.tpin=a;S.set.tpinOn=true;save();closeSheet();tset();toast('تم حفظ رمز الأمان')}
-function disableTpin(){if(!confirm('إلغاء تفعيل رمز الأمان عند التحويل؟'))return;S.set.tpinOn=false;save();tset()}
-function sec(){sheet(`<h2 style="margin-top:0">إعدادات الأمان</h2>
-<button class="btn" onclick="toast('تغيير كلمة المرور يتطلب خادماً')">تغيير كلمة المرور</button><br><br>
-<div class="set"><span>تفعيل رمز PIN عند الدخول</span><b>${S.set.pinOn?'مفعّل':'غير مفعّل'}</b></div>
-<button class="btn" style="margin-top:10px" onclick="${S.set.pinOn?'disablePin()':'setupPin()'}">${S.set.pinOn?'إلغاء تفعيل PIN':(S.set.pin?'تفعيل PIN':'إنشاء رمز PIN')}</button>
-${S.set.pin?`<button class="btn" style="background:var(--card2);color:var(--tx);margin-top:10px" onclick="setupPin(true)">تغيير رمز PIN</button>`:''}`)}
-function setupPin(change){sheet(`<h2 style="margin-top:0">${change?'تغيير رمز PIN':'إنشاء رمز PIN'}</h2><label>أدخل رمز PIN مكوّن من 4 أرقام</label><input id="p1" type="password" inputmode="numeric" maxlength="4" pattern="\\d*"><label>تأكيد الرمز</label><input id="p2" type="password" inputmode="numeric" maxlength="4" pattern="\\d*"><button class="btn" onclick="savePin()">حفظ</button>`)}
-function savePin(){const a=$('p1').value.trim(),b=$('p2').value.trim();if(!/^\d{4}$/.test(a))return toast('أدخل 4 أرقام');if(a!==b)return toast('الرمزان غير متطابقين');S.set.pin=a;S.set.pinOn=true;save();closeSheet();sec();toast('تم حفظ رمز PIN')}
-function disablePin(){if(!confirm('إلغاء تفعيل حماية PIN؟'))return;S.set.pinOn=false;save();sec()}
-function dev(){sheet(`<h2 style="margin-top:0">الأجهزة المرتبطة</h2><p style="color:var(--mut)">هذا الجهاز</p><div class="tx"><span>${navigator.userAgent.includes('Android')?'Android':'متصفح'}</span><span dir="ltr">v0.1.0</span></div>`)}
-function lockScreen(){
-$('app').innerHTML='';$('nav').innerHTML='';
-const wrap=document.createElement('div');
-wrap.style.cssText='position:fixed;inset:0;background:var(--bg);z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px';
-wrap.innerHTML=`<div class="av">🔒</div><div style="font-weight:700">أدخل رمز PIN</div><input id="lockPin" type="password" inputmode="numeric" maxlength="4" pattern="\\d*" style="width:160px;text-align:center;font-size:1.4rem;letter-spacing:8px" autofocus><button class="btn" style="width:200px" onclick="tryUnlock()">دخول</button>`;
-document.body.appendChild(wrap);
-window._lockWrap=wrap;
-$('lockPin').addEventListener('keydown',e=>{if(e.key==='Enter')tryUnlock()});
-}
-function tryUnlock(){const v=$('lockPin').value.trim();if(v===S.set.pin){window._lockWrap.remove();render()}else toast('رمز PIN غير صحيح')}
+    // --- AUDIO SYNTHESIZER (NATIVE WEB AUDIO API FOR BUTTON CLICKS & NOTIFICATIONS) ---
+    function playClickSound() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, ctx.currentTime);
+            gain.gain.setValueAtTime(0.05, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.08);
+        } catch(e){}
+    }
 
-function rnd(n,al){let s='';for(let i=0;i<n;i++)s+=al[Math.floor(Math.random()*al.length)];return s}
-function authWrap(h){$('app').innerHTML='';$('nav').innerHTML='';let w=$('authWrap');if(!w){w=document.createElement('div');w.id='authWrap';w.style.cssText='position:fixed;inset:0;background:var(--bg);z-index:40;overflow:auto;padding:24px 18px;max-width:480px;margin:auto';document.body.appendChild(w)}w.innerHTML=h}
-function authClose(){const w=$('authWrap');if(w)w.remove()}
-function loginView(){authWrap(`<div class="av">👛</div><h2 style="text-align:center">تسجيل الدخول</h2>
-<label>اسم المستخدم</label><input id="lu" autocomplete="username"><label>كلمة المرور</label><input id="lp" type="password" autocomplete="current-password">
-<button class="btn" style="margin-top:14px" onclick="doLogin()">دخول</button>
-<button class="chip" style="display:block;margin:14px auto" onclick="signupView()">إنشاء حساب جديد</button>`)}
-function doLogin(){const a=S.acct;const u=$('lu').value.trim(),p=$('lp').value;
-if(!a)return toast('لا يوجد حساب. أنشئ حساباً أولاً');
-if(u!==a.user||p!==a.pass)return toast('بيانات الدخول غير صحيحة');
-if(a.frozen)return toast('الحساب مجمّد. تواصل مع خدمة العملاء');
-S.loggedIn=true;save();authClose();boot()}
-function newCap(){window._cap=rnd(5,'ABCDEFGHJKLMNPQRSTUVWXYZ23456789');const e=$('capBox');if(e)e.textContent=window._cap}
-function signupView(){window._cap=rnd(5,'ABCDEFGHJKLMNPQRSTUVWXYZ23456789');authWrap(`<h2 style="text-align:center;margin-top:0">إنشاء حساب</h2>
-<label>الاسم الثلاثي *</label><input id="su_n">
-<label>اسم المستخدم *</label><input id="su_u" autocomplete="username">
-<label>البريد الإلكتروني *</label><input id="su_e" type="email">
-<label>رقم الهاتف *</label><input id="su_p" type="tel" inputmode="tel">
-<label>كلمة المرور *</label><input id="su_pw" type="password">
-<label>تأكيد كلمة المرور *</label><input id="su_pw2" type="password">
-<label>رمز PIN (اختياري، 4 أرقام)</label><input id="su_pin" type="password" inputmode="numeric" maxlength="4">
-<label>رمز التحقق *</label>
-<div class="row sp" style="gap:8px;margin:6px 0"><div id="capBox" style="flex:1;text-align:center;font-size:1.5rem;letter-spacing:6px;font-weight:700;background:var(--card);border-radius:12px;padding:10px;user-select:none;direction:ltr">${window._cap}</div><button class="chip" onclick="newCap()">↻</button></div>
-<input id="su_c" placeholder="اكتب الرمز الظاهر" style="direction:ltr;text-align:center" autocapitalize="characters">
-<button class="btn" style="margin-top:14px" onclick="doSignup()">إنشاء الحساب</button>
-<button class="chip" style="display:block;margin:14px auto" onclick="loginView()">لدي حساب بالفعل</button>`)}
-function doSignup(){const g=i=>$(i).value.trim();
-const n=g('su_n'),u=g('su_u'),e=g('su_e'),p=g('su_p'),pw=$('su_pw').value,pw2=$('su_pw2').value,pin=g('su_pin'),cap=g('su_c').toUpperCase();
-if(!n||!u||!e||!p||!pw||!pw2||!cap)return toast('جميع الحقول إجبارية عدا PIN');
-if(n.split(/\s+/).length<3)return toast('اكتب الاسم الثلاثي كاملاً');
-if(!/^\S+@\S+\.\S+$/.test(e))return toast('البريد الإلكتروني غير صحيح');
-if(pw.length<6)return toast('كلمة المرور 6 أحرف على الأقل');
-if(pw!==pw2)return toast('كلمتا المرور غير متطابقتين');
-if(pin&&!/^\d{4}$/.test(pin))return toast('PIN يجب أن يكون 4 أرقام');
-if(cap!==window._cap){newCap();return toast('رمز التحقق غير صحيح')}
-const id=rnd(16,'0123456789').replace(/(.{4})/g,'$1 ').trim();
-S.acct={user:u,pass:pw,frozen:false};
-S.me={name:n,user:u,id,email:e,phone:p,avatar:'',addr:rnd(32,'0123456789abcdef')};
-S.bal={USD:0,EUR:0,SYP:0};S.tx=[];
-if(pin){S.set.pin=pin;S.set.pinOn=true}
-S.loggedIn=true;save();authClose();boot()}
-function boot(){applyTheme();if(S.acct&&S.acct.frozen&&S.loggedIn){S.loggedIn=false;save()}if(!S.loggedIn||!S.acct){S.acct?loginView():signupView();return}
-if(S.set.pinOn&&S.set.pin){lockScreen()}else{render()}}
+    function playNotificationSound() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc1 = ctx.createOscillator();
+            const osc2 = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc1.type = 'triangle';
+            osc2.type = 'triangle';
+            osc1.frequency.setValueAtTime(523.25, ctx.currentTime);
+            osc2.frequency.setValueAtTime(659.25, ctx.currentTime + 0.15);
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+            osc1.connect(gain);
+            osc2.connect(gain);
+            gain.connect(ctx.destination);
+            osc1.start(ctx.currentTime);
+            osc1.stop(ctx.currentTime + 0.15);
+            osc2.start(ctx.currentTime + 0.15);
+            osc2.stop(ctx.currentTime + 0.4);
+        } catch(e){}
+    }
 
-if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
-boot();
+    // Attach click sound to all buttons
+    document.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON' || e.target.classList.contains('account-menu-item') || e.target.classList.contains('nav-item')) {
+            playClickSound();
+        }
+    });
+
+    // --- RENDER TRANSACTIONS WITH 3-SECOND LONG PRESS ---
+    function renderTransactions() {
+        const listHtml = transactions.map((tx, idx) => `
+            <div class="tx-item" id="txItem-${idx}">
+                <div>
+                    <div style="font-weight:bold; font-size:13px;">${tx.sender} ➔ ${tx.recipient}</div>
+                    <div style="font-size:10px; color:var(--text-muted);">${tx.time}</div>
+                </div>
+                <div style="color:var(--gold); font-weight:bold; font-size:13px;">${tx.amount}</div>
+            </div>
+        `).join('');
+        
+        document.getElementById('txList').innerHTML = listHtml;
+        document.getElementById('txListFull').innerHTML = listHtml;
+
+        // Setup Long Press (3 seconds) for receipt popup
+        transactions.forEach((tx, idx) => {
+            const el = document.getElementById(`txItem-${idx}`);
+            let timer;
+
+            const startPress = () => {
+                timer = setTimeout(() => {
+                    document.getElementById('recSender').innerText = tx.sender;
+                    document.getElementById('recTxCode').innerText = tx.txCode;
+                    document.getElementById('recRecipient').innerText = tx.recipient;
+                    document.getElementById('recAmount').innerText = tx.amount;
+                    document.getElementById('recTime').innerText = tx.time;
+                    openModal('receiptModal');
+                    playNotificationSound();
+                }, 3000); // 3 Seconds long press
+            };
+
+            const cancelPress = () => { clearTimeout(timer); };
+
+            el.addEventListener('mousedown', startPress);
+            el.addEventListener('touchstart', startPress);
+            el.addEventListener('mouseup', cancelPress);
+            el.addEventListener('mouseleave', cancelPress);
+            el.addEventListener('touchend', cancelPress);
+        });
+    }
+
+    // --- NAVIGATION LOGIC ---
+    function switchTab(tabId, btn) {
+        document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    function toggleAdminView() {
+        const userApp = document.getElementById('userAppView');
+        const adminView = document.getElementById('adminControlView');
+        const btn = document.getElementById('toggleViewBtn');
+        const title = document.getElementById('appHeaderTitle');
+
+        if (adminView.style.display === 'block') {
+            adminView.style.display = 'none';
+            userApp.style.display = 'flex';
+            btn.innerText = 'لوحة التحكم ⚙️';
+            title.innerText = 'محفظة الأسد - تطبيق المستخدم';
+        } else {
+            adminView.style.display = 'block';
+            userApp.style.display = 'none';
+            btn.innerText = 'واجهة التطبيق 📱';
+            title.innerText = 'محفظة الأسد - لوحة الإدارة';
+        }
+    }
+
+    // --- MODALS ---
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    // --- ACTIONS & CALCULATORS ---
+    function calcExchange() {
+        const from = document.getElementById('exFrom').value;
+        const to = document.getElementById('exTo').value;
+        const amt = parseFloat(document.getElementById('exAmount').value) || 0;
+        let res = amt;
+
+        // Convert to USD base first
+        let usdBase = amt;
+        if (from === 'SYP') usdBase = amt / rates.USD_SYP;
+        if (from === 'TRY') usdBase = amt / rates.USD_TRY;
+        if (from === 'EUR') usdBase = amt * rates.EUR_USD;
+
+        // Convert USD base to target currency
+        if (to === 'SYP') res = usdBase * rates.USD_SYP;
+        if (to === 'TRY') res = usdBase * rates.USD_TRY;
+        if (to === 'EUR') res = usdBase / rates.EUR_USD;
+        if (to === 'USD') res = usdBase;
+
+        document.getElementById('exResult').innerText = res.toLocaleString('en-US', {maximumFractionDigits: 2}) + ' ' + to;
+    }
+
+    function executeExchange() {
+        alert('تمت عملية تحويل العملة بنجاح بحسب سعر الصرف المعتمد!');
+    }
+
+    function submitSendTx() {
+        const acc = document.getElementById('sendAccNum').value;
+        const hideIdentity = document.getElementById('hideIdentityToggle').checked;
+        if (!acc) { alert('يرجى إدخال رقم الحساب المراد الإرسال له'); return; }
+        
+        const senderName = hideIdentity ? "مرسل مجهول (هوية مخفية)" : "أحمد خالد";
+        transactions.unshift({
+            sender: senderName,
+            txCode: "TX-" + Math.floor(100000 + Math.random() * 900000),
+            recipient: "حساب (" + acc + ")",
+            amount: "$ 50.00 USD",
+            time: new Date().toLocaleString()
+        });
+        
+        renderTransactions();
+        closeModal('sendModal');
+        alert('تم إرسال الحوالة بنجاح!');
+    }
+
+    function copyAccountNum() {
+        const accNum = document.getElementById('copyAccNumDisplay').innerText;
+        navigator.clipboard.writeText(accNum);
+        alert('تم نسخ رقم الحساب العام: ' + accNum);
+    }
+
+    function simulateScan() {
+        closeModal('scannerModal');
+        openModal('sendModal');
+        document.getElementById('sendAccNum').value = "ACC-88776655";
+    }
+
+    function toggleTheme() {
+        document.body.classList.toggle('light-theme');
+    }
+
+    function changeLanguage() {
+        const l = document.getElementById('langSelect').value;
+        alert('تم تغيير لغة التطبيق إلى: ' + l.toUpperCase());
+    }
+
+    function deactivateAccount() {
+        if (confirm('هل أنت تأكد من إرادتك لتعطيل الحساب نهائياً؟')) {
+            alert('تم تقديم طلب تعطيل الحساب للإدارة.');
+        }
+    }
+
+    function logoutConfirm() {
+        if (confirm('هل أنت متأكد من تسجيل الخروج من محفظة الأسد؟')) {
+            alert('تم تسجيل الخروج بنجاح.');
+        }
+    }
+
+    function sendUserSupportMsg() {
+        const input = document.getElementById('userSupportInput');
+        if (!input.value) return;
+        const chat = document.getElementById('supportChatBox');
+        chat.innerHTML += `<div style="text-align:left; color:var(--gold); margin:5px 0;"><b>أنت:</b> ${input.value}</div>`;
+        input.value = '';
+    }
+
+    // --- ADMIN CONTROLLER FUNCTIONS ---
+    function updateRatesFromAdmin() {
+        rates.USD_SYP = parseFloat(document.getElementById('rateUsdSyp').value);
+        rates.USD_TRY = parseFloat(document.getElementById('rateUsdTry').value);
+        rates.EUR_USD = parseFloat(document.getElementById('rateEurUsd').value);
+        calcExchange();
+    }
+
+    function updateUserDataFromAdmin() {
+        const name = document.getElementById('adminUserName').value;
+        const syp = parseFloat(document.getElementById('adminBalSyp').value);
+        const usd = parseFloat(document.getElementById('adminBalUsd').value);
+
+        document.getElementById('accountNameDisplay').innerText = name;
+        document.getElementById('bal-syp').innerText = syp.toLocaleString() + ' ل.س';
+        document.getElementById('bal-usd').innerText = '$ ' + usd.toLocaleString();
+    }
+
+    function sendAdminReply() {
+        const reply = document.getElementById('adminReplyText').value;
+        if (!reply) return;
+
+        // Populate User Chat
+        const chat = document.getElementById('supportChatBox');
+        chat.innerHTML += `<div style="text-align:right; color:var(--accent); margin:5px 0;"><b>الإدارة:</b> ${reply}</div>`;
+
+        // Trigger Sound & Global Popup
+        playNotificationSound();
+        document.getElementById('adminNotificationText').innerText = reply;
+        openModal('adminNotificationPopup');
+    }
+
+    // Initialize App
+    renderTransactions();
+    calcExchange();
 </script>
-
-<!-- تعريف خريطة الاستيراد (Import Map) الخاصة بـ Firebase -->
-<script type="importmap">
-{
-  "imports": {
-    "firebase/app": "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js",
-    "firebase/analytics": "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js"
-  }
-}
-</script>
-
-<!-- استدعاء ملف الإعداد كـ Module -->
-<script type="module" src="firebase-config.js"></script>
-<script src="remote.js"></script>
 </body>
 </html>
