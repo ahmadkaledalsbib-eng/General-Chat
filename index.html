@@ -23,7 +23,7 @@ footer{text-align:center;color:var(--mu);font-size:12px;padding:10px;margin-bott
 h3{margin:4px 0 10px}.c{text-align:center}.mu{color:var(--mu);font-size:13px}
 </style></head><body>
 <div id="toast"></div><div class="w" id="v"></div><div id="nv"></div>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script src="firebase-config.js"></script><script src="shared.js"></script>
+<script src="firebase-config.js"></script><script src="shared.js"></script>
 <script>
 let D=load(),U=null,tab='home',seen=new Set(),lang='ar',pinOK=0;
 const P=JSON.parse(localStorage.getItem('asad_pref')||'{"confirm":1,"share":1,"def":"SYP","code":"","bio":0,"pin":"","face":0,"theme":"dark"}');
@@ -106,6 +106,7 @@ function set(){return `<button class="g" onclick="go('acc')">← رجوع</butto
 <div class="it">تعطيل الحساب<button style="background:var(--er);color:#fff" onclick="dis()">تعطيل</button></div><div class="it">رقم الإصدار<b>${D.ver}</b></div><div class="it">تسجيل الخروج<button class="g" onclick="out()">خروج</button></div></div>`}
 function dis(){modal(`<h3>تعطيل الحساب؟</h3><p class="mu">لن تتمكن من الدخول حتى تعيد الإدارة تفعيله.</p><div class="row"><button id="y" style="background:var(--er);color:#fff">نعم</button><button class="g" onclick="this.closest('.m').remove()">لا</button></div>`).querySelector('#y').onclick=()=>{D=load();D.users.find(x=>x.id==U.id).active=0;save(D);document.querySelector('.m').remove();render()}}
 function out(){modal(`<h3>تأكيد تسجيل الخروج؟</h3><div class="row"><button id="y">نعم</button><button class="g" onclick="this.closest('.m').remove()">لا</button></div>`).querySelector('#y').onclick=()=>{document.querySelector('.m').remove();auth.signOut()}}
+window.onSyncErr=x=>toast('تعذّر الاتصال بقاعدة البيانات: '+(x.raw||x.detail||x.message),'err');
 setInterval(lockTick,1000);startCtl(lockTick);
 auth.onAuthStateChanged(fu=>{if(fu){startMain(onMain)}else{stopMain();U=null;tab='home';showAuth('in')}});
 </script></body></html>
