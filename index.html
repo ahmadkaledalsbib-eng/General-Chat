@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>محفظة الأسد</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
-:root{--bg:#0e1116;--card:#1a1f29;--tx:#f2f4f8;--mu:#8b93a3;--ac:#d4a017;--ok:#2ecc71;--er:#e74c3c}
+:root{--bg:#1b1d2b;--card:#242839;--tx:#f2f4f8;--mu:#9aa1b8;--ac:#6b82d6;--ok:#2ecc71;--er:#e74c3c}
 [data-t=light]{--bg:#f3f5f9;--card:#fff;--tx:#14181f;--mu:#6a7384}
 *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
 body{font-family:system-ui,Tahoma,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;padding-bottom:calc(150px + env(safe-area-inset-bottom))}
@@ -21,14 +21,23 @@ footer{text-align:center;color:var(--mu);font-size:12px;padding:10px;margin-bott
 .av{width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,var(--ac),#8a5a00);display:flex;align-items:center;justify-content:center;font-size:48px;margin:8px auto}
 .it{display:flex;justify-content:space-between;align-items:center;padding:13px 4px;border-bottom:1px solid #8883}
 h3{margin:4px 0 10px}.c{text-align:center}.mu{color:var(--mu);font-size:13px}
+.hd{margin:calc(-14px - env(safe-area-inset-top)) -14px 16px;padding:calc(14px + env(safe-area-inset-top)) 18px 18px;background:linear-gradient(160deg,#6c7db6,#43517f);border-radius:0 0 38px 38px;color:#fff}
+.top{display:flex;justify-content:space-between;align-items:center}
+.ic{width:48px;height:48px;border-radius:50%;padding:0;background:rgba(255,255,255,.25);color:#fff;font-size:20px}.ic.gr{background:#3fae7d}.ic.sm{width:44px;height:44px;border-radius:14px;font-size:18px}
+.seg{display:flex;background:rgba(255,255,255,.22);border-radius:30px;padding:5px}.seg span{padding:8px 11px;border-radius:24px;font-size:13px;cursor:pointer}.seg .on{background:rgba(255,255,255,.6);color:#222;font-weight:700}
+.lb{margin-top:26px;font-size:18px;opacity:.9}.amt{display:flex;justify-content:space-between;align-items:center;margin:6px 0}.amt h1{font-size:34px;direction:ltr}.lb2{opacity:.85;font-size:17px}
+.pills{margin-top:18px}.pills button{background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.2);border-radius:30px;padding:16px;font-size:17px}.snd{color:#ff7b7b}.rcv{color:#62e3a4}
+.qa{display:flex;justify-content:space-between;margin:6px 0 20px}.qa div{text-align:center;cursor:pointer;flex:1}.qa span{display:flex;width:56px;height:56px;margin:0 auto 6px;border-radius:50%;background:var(--card);align-items:center;justify-content:center;font-size:22px}.qa small{font-size:12px}
+.sh{font-size:20px;margin:6px 0 12px}.tx{background:var(--card);border-radius:16px;padding:16px;margin-bottom:10px;border:0}.tx b{font-size:17px}
+nav{border-radius:28px 28px 0 0;border:0}nav button.on{background:rgba(107,130,214,.22);border-radius:18px;padding:8px 14px;color:#a9b8ff}
 </style></head><body>
 <div id="toast"></div><div class="w" id="v"></div><div id="nv"></div>
 <script src="firebase-config.js?v=2"></script><script src="shared.js?v=2"></script>
 <script>
-let D=load(),U=null,tab='home',seen=new Set(),lang='ar',pinOK=0;
+let D=load(),U=null,tab='home',seen=new Set(),lang='ar',pinOK=0,cur='SYP',hide=0;
 const P=JSON.parse(localStorage.getItem('asad_pref')||'{"confirm":1,"share":1,"def":"SYP","code":"","bio":0,"pin":"","face":0,"theme":"dark"}');
 const savP=()=>localStorage.setItem('asad_pref',JSON.stringify(P));
-const T={ar:['الرئيسية','المعاملات','تحويل','حسابي'],en:['Home','Activity','Exchange','Account'],tr:['Ana Sayfa','İşlemler','Çevir','Hesabım'],de:['Start','Aktivität','Tausch','Konto']};
+const T={ar:['الرئيسية','التحويلات','تحويل','حسابي'],en:['Home','Activity','Exchange','Account'],tr:['Ana Sayfa','İşlemler','Çevir','Hesabım'],de:['Start','Aktivität','Tausch','Konto']};
 document.documentElement.dataset.t=P.theme;
 // أصوات
 let ac;function beep(f,d=.12){try{ac=ac||new (AudioContext||webkitAudioContext)();f.forEach((x,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=x;o.connect(g);g.connect(ac.destination);const t=ac.currentTime+i*d;g.gain.setValueAtTime(.18,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.start(t);o.stop(t+d)})}catch(x){}}
@@ -66,10 +75,12 @@ const go=t=>{tab=t;render();scrollTo(0,0)};
 const mine=()=>D.tx.filter(t=>t.from==U.id||t.to==U.id).reverse();
 function row(t){const o=t.from==U.id;return `<div class="tx" data-id="${t.id}"><span>${o?'⬆️ إلى':'⬇️ من'} ${e(o?nm(t.to):(t.anon?'مجهول':nm(t.from)))}<br><small class="mu">${new Date(t.t).toLocaleString('ar')}</small></span><b class="${o?'out':'in'}">${o?'-':'+'}${fm(t.amt,t.cur)}</b></div>`}
 const nm=id=>(D.users.find(u=>u.id==id)||{name:'—'}).name;
-function home(){const l=mine().slice(0,6);setTimeout(lp,0);
- return `<h3>الرصيد</h3><div class="card bal">${CUR.map(c=>`<div><small>${{SYP:'سوري',USD:'دولار',TRY:'تركي',EUR:'يورو'}[c]}</small><b>${fm(U.bal[c]||0,c)}</b></div>`).join('')}</div>
- <div class="row" style="margin-bottom:12px"><button onclick="sendM()">⬆️ إرسال</button><button class="g" onclick="recvM()">⬇️ استقبال</button></div>
- <div class="card"><h3>سجل الحوالات</h3><p class="mu">اضغط مطولاً 3 ثوانٍ لعرض التفاصيل</p>${l.map(row).join('')||'<p class="mu c">لا توجد حوالات</p>'}<div class="row" style="margin-top:12px"><button onclick="sendM()">إرسال</button><button class="g" onclick="fav()">★ إضافة للمفضلة</button></div></div>`}
+function bell(){D=load();const l=D.notif.filter(n=>n.uid==U.id).slice(-15).reverse();modal(`<h3>الإشعارات</h3>${l.map(n=>`<div class="it" style="font-size:14px">${e(n.txt)}</div>`).join('')||'<p class="mu c">لا توجد إشعارات</p>'}<button style="width:100%;margin-top:10px" onclick="this.closest('.m').remove()">إغلاق</button>`)}
+const soon=()=>toast('هذه الخدمة قريباً','ok');
+function home(){const l=mine().slice(0,6);setTimeout(lp,0);const b=U.bal[cur]||0,N={SYP:'ليرة',USD:'دولار',TRY:'تركي',EUR:'يورو'};
+ return `<div class="hd"><div class="top"><button class="ic gr" onclick="go('ex')">📈</button><div class="seg">${CUR.map(c=>`<span class="${c==cur?'on':''}" onclick="cur='${c}';render()">${N[c]}</span>`).join('')}</div><button class="ic" onclick="bell()">🔔</button></div><p class="lb">إجمالي الرصيد</p><div class="amt"><h1>${hide?'••••••':cur+' '+Number(b).toLocaleString('en',{maximumFractionDigits:2})}</h1><button class="ic sm" onclick="hide=!hide;render()">${hide?'👁️':'🙈'}</button></div><p class="lb2">0 رصيد مُعلَّق</p><div class="row pills"><button class="rcv" onclick="recvM()">↙ استقبال</button><button class="snd" onclick="sendM()">↗ إرسال</button></div></div>
+ <div class="qa">${[['⭐','خدماتي',"go('acc')"],['🔁','حوالات',"go('tx')"],['💳','مدفوعاتي','soon()'],['🧾','فواتير','soon()'],['🏦','بنوك','soon()']].map(([i,t,f])=>`<div onclick="${f}"><span>${i}</span><small>${t}</small></div>`).join('')}</div>
+ <h3 class="sh">آخر التحويلات</h3><p class="mu" style="margin-bottom:8px">اضغط مطولاً 3 ثوانٍ على أي حوالة لعرض التفاصيل</p>${l.map(row).join('')||'<p class="mu c">لا توجد حوالات</p>'}<div class="row" style="margin:6px 0 12px"><button class="g" onclick="fav()">★ إضافة آخر حوالة للمفضلة</button></div>`}
 function tx(){setTimeout(lp,0);return `<h3>المعاملات</h3><div class="card">${mine().map(row).join('')||'<p class="mu c">لا توجد معاملات</p>'}</div>`}
 function lp(){document.querySelectorAll('.tx').forEach(el=>{let t;const s=()=>t=setTimeout(()=>detail(el.dataset.id),3000),c=()=>clearTimeout(t);['touchstart','mousedown'].forEach(n=>el.addEventListener(n,s));['touchend','touchmove','mouseup','mouseleave'].forEach(n=>el.addEventListener(n,c))})}
 function detail(id){const t=D.tx.find(x=>x.id==id);beep(SND.ok);const m=modal(`<h3>تفاصيل الحوالة</h3><p>المرسل: <b>${e(t.anon&&t.to==U.id?'مجهول':nm(t.from))}</b></p><p>المستلم: <b>${e(nm(t.to))}</b></p><p>رمز المعاملة: <b>${e(t.id)}</b></p><p>المبلغ: <b>${fm(t.amt,t.cur)}</b></p><p>التوقيت: <b>${new Date(t.t).toLocaleString('ar')}</b></p>${t.note?`<p>ملاحظة: ${e(t.note)}</p>`:''}<button style="width:100%" onclick="this.closest('.m').remove()">إغلاق</button>`)}
