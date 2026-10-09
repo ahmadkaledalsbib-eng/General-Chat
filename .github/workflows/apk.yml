@@ -1,24 +1,43 @@
 name: Build APK
 on:
-  workflow_dispatch:
   push:
     branches: [main]
+  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 20 }
+        with:
+          node-version: 20
       - uses: actions/setup-java@v4
-        with: { distribution: temurin, java-version: 17 }
-      - name: Build
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Prepare web files
         run: |
-          mkdir www && cp index.html shared.js firebase-config.js www/
-          npm install
+          mkdir -p www
+          cp index.html shared.js firebase-config.js logo.svg www/
+      - name: Install Capacitor
+        run: npm install
+      - name: Add Android project
+        run: |
           npx cap add android
           npx cap sync android
-          cd android && chmod +x gradlew && ./gradlew assembleDebug
+      - name: Set version (increases every build)
+        run: |
+          sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle
+          sed -i "s/versionName \"1.0\"/versionName \"1.0.${{ github.run_number }}\"/" android/app/build.gradle
+      - name: Use the fixed signing key (so updates install over old versions)
+        run: |
+          mkdir -p ~/.android
+          cp lion-debug.keystore ~/.android/debug.keystore
+      - name: Build APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
       - uses: actions/upload-artifact@v4
         with:
           name: asad-wallet-apk
