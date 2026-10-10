@@ -44,18 +44,31 @@ function draw(){
 function show(){ov.style.display='flex'}
 function hide(){ov.style.display='none'}
 
+function loggedIn(){try{return !!localStorage.getItem('lw_s')}catch(x){return false}}
 function start(){
-  st.locked=1;st.buf='';st.first='';st.err='';st.note='';
-  st.mode=localStorage.getItem(K)?'enter':'create';
+  st.buf='';st.first='';st.err='';st.note='';
+  if(!localStorage.getItem(K)){
+    if(!loggedIn()){unlock();return}
+    st.locked=1;st.mode='create';
+  }else{st.locked=1;st.mode='enter'}
   show();draw();
 }
 
 function unlock(){st.locked=0;st.busy=0;st.buf='';hide()}
 
-function reset(msg){
+function reset(mail){
+  var em='';try{em=(JSON.parse(localStorage.getItem('lw_s'))||{}).email||''}catch(x){}
   try{localStorage.removeItem(K);localStorage.removeItem(KS);localStorage.removeItem(KF)}catch(x){}
-  try{auth.signOut()}catch(x){}
-  st.buf='';st.first='';st.err='';st.note=msg||'أنشئ رمزاً جديداً';st.mode='create';draw();
+  var done=function(ok){
+    try{auth.signOut()}catch(x){}
+    unlock();
+    try{
+      if(mail&&em)toast(ok?('أُرسل رابط تغيير كلمة المرور إلى '+em+'. غيّرها ثم سجّل الدخول وضع رمز PIN جديداً'):'تعذّر إرسال البريد. سجّل الدخول وضع رمز PIN جديداً',ok?'ok':'err');
+      else toast('سُجّل خروجك. سجّل الدخول من جديد وضع رمز PIN جديداً','ok');
+    }catch(x){}
+  };
+  if(mail&&em){try{auth.sendPasswordResetEmail(em).then(function(){done(1)}).catch(function(){done(0)})}catch(x){done(0)}}
+  else done(0);
 }
 
 function bio(){
@@ -86,7 +99,7 @@ async function submit(){
     var s2=localStorage.getItem(KS)||'',h2=await hx(s2+p);
     if(h2===localStorage.getItem(K)){try{localStorage.setItem(KF,'0')}catch(x){}bio();return}
     var f=(+localStorage.getItem(KF)||0)+1;try{localStorage.setItem(KF,String(f))}catch(x){}
-    if(f>=MAXF){reset('تجاوزت عدد المحاولات. سُجّل خروجك، أنشئ رمزاً جديداً ثم سجّل الدخول بالبريد.');return}
+    if(f>=MAXF){reset(0);return}
     st.err='الرمز خاطئ (المحاولات المتبقية: '+(MAXF-f)+')';draw();
   }
 }
@@ -94,7 +107,7 @@ async function submit(){
 ov.addEventListener('click',function(ev){
   var b=ev.target.closest('[data-k],[data-a]');if(!b)return;
   if(b.dataset.a==='bio'){bio();return}
-  if(b.dataset.a==='forgot'){ev.preventDefault();reset('سُجّل خروجك. أنشئ رمزاً جديداً ثم سجّل الدخول بالبريد.');return}
+  if(b.dataset.a==='forgot'){ev.preventDefault();reset(1);return}
   if(st.busy)return;
   var k=b.dataset.k;
   if(k==='x'){st.buf=st.buf.slice(0,-1);draw();return}
@@ -108,5 +121,10 @@ document.addEventListener('visibilitychange',function(){
   if(!st.locked&&st.hiddenAt&&Date.now()-st.hiddenAt>GRACE)start();
 });
 
+window.AppLock={
+  hasPin:function(){return !!localStorage.getItem(K)},
+  setPin:async function(p){var sl=salt(),h=await hx(sl+p);localStorage.setItem(KS,sl);localStorage.setItem(K,h);localStorage.setItem(KF,'0')},
+  require:function(){if(!st.locked&&!localStorage.getItem(K))start()}
+};
 start();
 })();
