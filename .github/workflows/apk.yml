@@ -18,17 +18,101 @@ jobs:
       - name: Prepare web files
         run: |
           mkdir -p www
-          cp index.html shared.js firebase-config.js logo.svg www/
+          cp index.html shared.js firebase-config.js logo.svg applock.js www/
+          sed -i 's#<body>#<body><script src="applock.js"></script>#' www/index.html
+          grep -c 'applock.js' www/index.html
       - name: Install Capacitor
         run: npm install
       - name: Add Android project
         run: |
           npx cap add android
           npx cap sync android
-      - name: Allow camera (for QR scanning)
+      - name: Allow camera and biometrics
         run: |
-          sed -i '/android.permission.INTERNET/a\    <uses-permission android:name="android.permission.CAMERA" />' android/app/src/main/AndroidManifest.xml
-          grep -n CAMERA android/app/src/main/AndroidManifest.xml || echo "camera line not added"
+          M=android/app/src/main/AndroidManifest.xml
+          sed -i '/android.permission.INTERNET/a\    <uses-permission android:name="android.permission.CAMERA" />' $M
+          sed -i '/android.permission.INTERNET/a\    <uses-permission android:name="android.permission.USE_BIOMETRIC" />' $M
+          grep -n "CAMERA\|USE_BIOMETRIC" $M || echo "permission lines not added"
+      - name: Add native biometric plugin
+        run: |
+          APPID=$(node -p "require('./capacitor.config.json').appId")
+          DIR=android/app/src/main/java/$(echo $APPID | tr . /)
+          echo "appId=$APPID dir=$DIR"
+          ls $DIR
+          cat > $DIR/BiometricLockPlugin.java <<EOF
+          package $APPID;
+
+          import androidx.biometric.BiometricManager;
+          import androidx.biometric.BiometricPrompt;
+          import androidx.core.content.ContextCompat;
+          import androidx.appcompat.app.AppCompatActivity;
+          import com.getcapacitor.JSObject;
+          import com.getcapacitor.Plugin;
+          import com.getcapacitor.PluginCall;
+          import com.getcapacitor.PluginMethod;
+          import com.getcapacitor.annotation.CapacitorPlugin;
+          import java.util.concurrent.Executor;
+
+          @CapacitorPlugin(name = "BiometricLock")
+          public class BiometricLockPlugin extends Plugin {
+            @PluginMethod
+            public void authenticate(final PluginCall call) {
+              final AppCompatActivity act = getActivity();
+              int can = BiometricManager.from(act).canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK);
+              if (can != BiometricManager.BIOMETRIC_SUCCESS) {
+                JSObject r = new JSObject();
+                r.put("ok", false);
+                r.put("reason", can == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED ? "none_enrolled" : "unavailable");
+                call.resolve(r);
+                return;
+              }
+              final Executor ex = ContextCompat.getMainExecutor(act);
+              act.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                  BiometricPrompt bp = new BiometricPrompt(act, ex, new BiometricPrompt.AuthenticationCallback() {
+                    @Override
+                    public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
+                      JSObject r = new JSObject();
+                      r.put("ok", true);
+                      call.resolve(r);
+                    }
+                    @Override
+                    public void onAuthenticationError(int code, CharSequence msg) {
+                      JSObject r = new JSObject();
+                      r.put("ok", false);
+                      r.put("reason", "error");
+                      call.resolve(r);
+                    }
+                  });
+                  BiometricPrompt.PromptInfo info = new BiometricPrompt.PromptInfo.Builder()
+                    .setTitle("تأكيد الهوية")
+                    .setSubtitle("استخدم بصمتك لفتح التطبيق")
+                    .setNegativeButtonText("إلغاء")
+                    .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_WEAK)
+                    .build();
+                  bp.authenticate(info);
+                }
+              });
+            }
+          }
+          EOF
+          cat > $DIR/MainActivity.java <<EOF
+          package $APPID;
+
+          import android.os.Bundle;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+            @Override
+            public void onCreate(Bundle savedInstanceState) {
+              registerPlugin(BiometricLockPlugin.class);
+              super.onCreate(savedInstanceState);
+            }
+          }
+          EOF
+          sed -i '/^dependencies {/a\    implementation "androidx.biometric:biometric:1.1.0"' android/app/build.gradle
+          grep -n "biometric" android/app/build.gradle
       - name: Generate app icon from logo.svg
         continue-on-error: true
         run: |
@@ -44,15 +128,22 @@ jobs:
         run: |
           sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle
           sed -i "s/versionName \"1.0\"/versionName \"1.0.${{ github.run_number }}\"/" android/app/build.gradle
+          grep -n "versionCode\|versionName" android/app/build.gradle
       - name: Use the fixed signing key (so updates install over old versions)
         run: |
+          test -f lion-debug.keystore || { echo "::error::lion-debug.keystore is missing from the repo root"; exit 1; }
           mkdir -p ~/.android
           cp lion-debug.keystore ~/.android/debug.keystore
+          keytool -list -keystore ~/.android/debug.keystore -storepass android | head -6
       - name: Build APK
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
+      - name: Show signing certificate of the built APK
+        run: |
+          APKSIGNER=$(ls $ANDROID_HOME/build-tools/*/apksigner | tail -1)
+          $APKSIGNER verify --print-certs android/app/build/outputs/apk/debug/app-debug.apk | head -5
       - uses: actions/upload-artifact@v4
         with:
           name: BANK-ADLIB-apk
