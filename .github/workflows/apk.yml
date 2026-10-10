@@ -55,5 +55,5 @@ jobs:
           ./gradlew assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: asad-wallet-apk
+          name: BANK-ADLIB-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
