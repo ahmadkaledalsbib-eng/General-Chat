@@ -123,4 +123,63 @@ if(typeof auth!=='undefined'&&window.AppLock){
     if(!window.AppLock.hasPin())window.AppLock.require();
   });
 }
+
+/* ===== التوثيق: علامة زرقاء للمستخدم وذهبية للجهة الحكومية ===== */
+function seal(color,ck,s){
+  var pts=[],n=16;
+  for(var i=0;i<n*2;i++){var r=(i%2?9.2:11),a=Math.PI*i/n-Math.PI/2;pts.push((12+r*Math.cos(a)).toFixed(2)+','+(12+r*Math.sin(a)).toFixed(2))}
+  return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" style="flex:none;vertical-align:middle"><polygon points="'+pts.join(' ')+'" fill="'+color+'" stroke="'+color+'" stroke-width="1.4" stroke-linejoin="round"/><path d="M7.6 12.4l3 3 5.8-6.2" fill="none" stroke="'+ck+'" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+window.BADGE=function(u,s){
+  if(!u||!u.vf)return '';
+  return u.gov?seal('#e8b630','#3b2a00',s||16):seal('#5b8def','#fff',s||16);
+};
+
+/* التحويلات: علامة التوثيق بجانب الاسم */
+window.row=function(t){
+  var o=t.from==U.id,u=D.users.find(function(x){return x.id==(o?t.to:t.from)}),sb=o||!t.anon;
+  return '<div class="tx" data-id="'+t.id+'"><span>'+e(o?nm(t.to):(t.anon?'مجهول':nm(t.from)))+(sb?' '+BADGE(u,16):'')+'<br><small class="mu">'+new Date(t.t).toLocaleString('ar')+'</small></span><b class="'+(o?'out':'in')+'" style="display:flex;gap:8px;align-items:center;font-size:19px">'+ICO(o?'up':'down',18)+fm(t.amt,t.cur)+'</b></div>';
+};
+
+/* شاشة الإرسال: بطاقة المستلم (صورة، اسم، رقم مخفي، علامة التوثيق) */
+var _sm=window.sendM;
+if(typeof _sm==='function'){
+  window.sendM=function(to){
+    _sm(to);
+    var a=document.getElementById('a');if(!a)return;
+    var box=document.createElement('div');box.id='rcp';a.insertAdjacentElement('afterend',box);
+    function upd(){
+      var v=a.value.trim(),u=D.users.find(function(x){return x.pub==v});
+      if(!u||u.id==U.id){box.innerHTML='';return}
+      var g=!!u.gov,last=String(u.pub).slice(-4);
+      box.innerHTML='<div style="text-align:center;margin:12px 0 8px"><div style="width:84px;height:84px;border-radius:50%;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;background:'+(g?'#2d2716':'#2a3350')+';color:'+(g?'#e8b630':'#8fb0ff')+'">'+ICO(g?'bank':'user',40)+'</div><b style="font-size:17px">'+e(u.name)+'</b><div class="mu" style="margin-top:6px;display:flex;gap:6px;justify-content:center;align-items:center;direction:ltr"><span>**** **** **** '+e(last)+'</span>'+BADGE(u,18)+'</div>'+(u.vf?'<small class="mu">'+(g?'جهة حكومية موثّقة':'حساب موثّق')+'</small>':'')+'</div>';
+    }
+    a.addEventListener('input',upd);a.addEventListener('change',upd);upd();
+  };
+}
+
+/* صفحة حسابي: حالة التوثيق وزر الطلب */
+window.reqVerify=function(){
+  var m=modal('<h3>طلب توثيق الحساب</h3><p class="mu" style="margin-bottom:8px">تراجع الإدارة طلبك ثم تضع علامة التوثيق على حسابك. اكتب معلومات تساعد في التحقق (اختياري).</p><textarea id="vn" rows="3" placeholder="مثال: الاسم الكامل كما في الهوية، وسبب طلب التوثيق"></textarea><div class="row"><button id="vy">إرسال الطلب</button><button class="g" id="vc">إلغاء</button></div>');
+  m.querySelector('#vc').onclick=function(){m.remove()};
+  m.querySelector('#vy').onclick=function(){
+    var n=m.querySelector('#vn').value.trim();
+    D=load();var u=D.users.find(function(x){return x.id==U.id});if(!u)return;
+    if(u.vf||u.vq){m.remove();return}
+    u.vq=Date.now();u.vnote=n.slice(0,300);save(D);m.remove();
+    toast('تم إرسال طلب التوثيق، بانتظار مراجعة الإدارة','ok');render();
+  };
+};
+var _acc=window.acc;
+if(typeof _acc==='function'){
+  window.acc=function(){
+    var h=_acc(),u=U,st;
+    if(u.vf)st='<div class="card c" style="display:flex;gap:10px;justify-content:center;align-items:center">'+BADGE(u,28)+'<b>'+(u.gov?'جهة حكومية موثّقة':'حسابك موثّق')+'</b></div>';
+    else if(u.vq)st='<div class="card c mu">⏳ طلب التوثيق قيد المراجعة من الإدارة</div>';
+    else st='<button class="g" style="width:100%;margin-bottom:12px" onclick="reqVerify()">🔵 طلب توثيق الحساب</button>';
+    h=h.replace('<h3 class="c">حسابي</h3>','<h3 class="c" style="display:flex;gap:8px;justify-content:center;align-items:center">حسابي '+BADGE(u,22)+'</h3>');
+    var k='<button style="width:100%;margin-bottom:12px" onclick="go(\'info\')">';
+    return h.indexOf(k)>=0?h.replace(k,st+k):h+st;
+  };
+}
 })();
